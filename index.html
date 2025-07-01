@@ -323,7 +323,7 @@
             sections: [
                 { id: 'overview', title: 'Current Status Cards', component: 'OverviewPanel', enabled: true },
                 { id: 'trends', title: 'Historical Trend Chart', component: 'TrendsPanel', enabled: true },
-                { id: 'sources', title: 'Source Labels Analysis', component: 'SourcesPanel', enabled: true },
+                { id: 'sources', title: 'Source Label Analysis', component: 'SourcesPanel', enabled: true },
                 { id: 'tickets', title: 'Recent Tickets Table', component: 'TicketsPanel', enabled: true },
                 { id: 'transitions', title: 'Transition Analysis', component: 'TransitionsPanel', enabled: true }
             ],
@@ -472,15 +472,16 @@
             return (
                 <div className="chart-container p-6">
                     <h3 className="text-lg font-semibold mb-4">Source Label Analysis Over Time</h3>
+                    <p className="text-sm text-gray-600 mb-4">Charts show the number of source label occurrences per time period. Multiple labels per ticket are counted separately.</p>
                     
                     {realData.sourceLabelsTimeSeries && (
                         <div className="mb-6">
-                            <h4 className="font-medium mb-3">Source Distribution Over Time (Stacked)</h4>
+                            <h4 className="font-medium mb-3">Source Label Occurrences Over Time (Stacked)</h4>
                             <ResponsiveContainer width="100%" height={sourceLabelsConfig.height}>
                                 <BarChart data={realData.sourceLabelsTimeSeries}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="date" />
-                                    <YAxis />
+                                    <YAxis label={{ value: 'Label Count', angle: -90, position: 'insideLeft' }} />
                                     <Tooltip content={<CustomTooltip />} />
                                     <Legend />
                                     {realData.sourceLabels?.map((source, index) => (
@@ -518,7 +519,7 @@
                         
                         {realData.sourceLabelsTimeSeries && (
                             <div>
-                                <h4 className="font-medium mb-3">Source Distribution (Last 14 Days)</h4>
+                                <h4 className="font-medium mb-3">Source Label Occurrences (Last 14 Days)</h4>
                                 <ResponsiveContainer width="100%" height={ageConfig.height}>
                                     <BarChart data={realData.sourceLabelsTimeSeries.slice(-14)}>
                                         <CartesianGrid strokeDasharray="3 3" />
@@ -529,7 +530,7 @@
                                             textAnchor="end"
                                             height={60}
                                         />
-                                        <YAxis />
+                                        <YAxis label={{ value: 'Label Count', angle: -90, position: 'insideLeft' }} />
                                         <Tooltip content={<CustomTooltip />} />
                                         <Legend />
                                         {realData.sourceLabels?.map((source, index) => (
@@ -730,7 +731,7 @@
                                     className="w-3 h-3 rounded mr-2" 
                                     style={{ backgroundColor: entry.color }}
                                 ></div>
-                                <span className="text-sm">{entry.name}: {entry.value}</span>
+                                <span className="text-sm">{entry.name}: {entry.value} labels</span>
                             </div>
                         ))}
                     </div>
