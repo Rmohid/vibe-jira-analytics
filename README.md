@@ -4,6 +4,9 @@ A minimal 3-file local web application that provides analytics and visualization
 
 ## Features
 
+- **Configuration-Driven Dashboard**: Easy content modification through JavaScript configuration objects
+- **Modular Components**: Reusable panel components for different types of analysis
+- **Dynamic Rendering**: Sections can be enabled/disabled without code changes
 - **Time Period Controls**: View data for 7d, 30d, 90d, 180d, 365d, or custom periods
 - **Time Interval Options**: Aggregate data daily, weekly, or monthly
 - **Priority Analytics**: Visualize tickets by priority levels (High <10, Medium <100, Low ≥100)
@@ -11,6 +14,7 @@ A minimal 3-file local web application that provides analytics and visualization
 - **Transition History**: Complete tracking of status changes, priority updates, and label modifications
 - **Persistent Credentials**: API tokens saved locally for convenience
 - **Smart Data Caching**: Preserves historical data and merges new information intelligently
+- **Centralized Styling**: Consistent colors and chart configurations
 
 ## Quick Start
 
@@ -118,10 +122,91 @@ Your API token needs:
 
 ## Architecture
 
+### Configuration-Driven Dashboard
+
+The dashboard now uses a configuration-driven approach for easy content management:
+
+```javascript
+DASHBOARD_CONFIG = {
+  sections: [{ id, title, component, enabled }],
+  charts: { chartType: { type, height, colors } },
+  cards: { cardType: { color, icon } },
+  labels: { sourceLabels: [{ name, label, color }] }
+}
+```
+
+### Components
 - **Backend**: Express.js server with Jira REST API v3 integration
-- **Frontend**: Single-file React application using CDN libraries
-- **Charts**: Recharts library for all visualizations
+- **Frontend**: Single-file React application with modular panel components
+- **DashboardRenderer**: Dynamic component that renders sections based on configuration
+- **Panel Components**: OverviewPanel, TrendsPanel, SourcesPanel, TicketsPanel, TransitionsPanel
+- **Charts**: Recharts library with centralized configuration
 - **Styling**: Tailwind CSS for responsive design
+
+## Customizing the Dashboard
+
+### Adding/Removing Sections
+
+Edit `DASHBOARD_CONFIG.sections` in `index.html`:
+```javascript
+// Disable a section
+{ id: 'transitions', component: 'TransitionsPanel', enabled: false }
+
+// Enable a section
+{ id: 'overview', component: 'OverviewPanel', enabled: true }
+```
+
+### Changing Chart Colors
+
+Update `DASHBOARD_CONFIG.charts`:
+```javascript
+charts: {
+  historical: {
+    colors: {
+      high: '#ff0000',    // Change to red
+      medium: '#ffaa00',  // Change to orange
+      low: '#0088ff'      // Change to blue
+    }
+  }
+}
+```
+
+### Modifying Source Labels
+
+Edit `DASHBOARD_CONFIG.labels.sourceLabels`:
+```javascript
+sourceLabels: [
+  { name: 'Bug Fix', label: 'src-bug-fix', color: '#ef4444' },
+  { name: 'Feature', label: 'src-feature', color: '#3b82f6' },
+  // Add, remove, or modify labels as needed
+]
+```
+
+### Creating Custom Panels
+
+1. **Create the component** in `index.html`:
+```javascript
+const CustomPanel = ({ realData, jiraConfig }) => {
+  if (!realData) return null;
+  return (
+    <div className="chart-container p-6">
+      <h3 className="text-lg font-semibold mb-4">Custom Analysis</h3>
+      {/* Your custom content */}
+    </div>
+  );
+};
+```
+
+2. **Register in DashboardRenderer**:
+```javascript
+case 'CustomPanel':
+  return <CustomPanel key={section.id} {...commonProps} />;
+```
+
+3. **Add to configuration**:
+```javascript
+{ id: 'custom', title: 'Custom Analysis', component: 'CustomPanel', enabled: true }
+```
 
 ## Security
 
@@ -130,10 +215,78 @@ Your API token needs:
 - No credentials are logged or transmitted to external services
 - All data remains on your local machine
 
+## Testing and Debugging
+
+### Using Test Scenarios
+
+The dashboard includes 6 predefined test scenarios accessible via the dropdown in demo mode:
+
+```javascript
+TEST_SCENARIOS = {
+  normal: { /* Typical production data */ },
+  empty: { /* No data state */ },
+  highActivity: { /* Heavy workload */ },
+  lowActivity: { /* Light workload */ },
+  errorState: { /* API failures */ },
+  loadingState: { /* Slow responses */ },
+  edgeCases: { /* Unusual patterns */ }
+}
+```
+
+### Developer Panel Features
+
+Access via the **🔧 Dev** button:
+
+- **Quick Actions**: Clear data, trigger errors, test loading states
+- **Data Export**: Download configuration, current data, or debug logs
+- **System Info**: Real-time status of React, charts, data, and errors
+
+### Debug Logging
+
+Access via the **📋 Logs** button:
+
+- **Categorized Logs**: INIT, API, STATE, PERFORMANCE, ERROR
+- **Real-time Streaming**: Live updates as actions occur
+- **Export Capability**: Download logs for analysis
+- **Session Persistence**: Logs stored in browser session
+
+### For Claude Debugging
+
+When reporting issues:
+
+1. **Reproduce the issue** using test scenarios
+2. **Open Debug Logs** panel to capture relevant information
+3. **Export logs** using the developer panel
+4. **Include scenario details** and steps to reproduce
+
+### Adding Custom Test Scenarios
+
+```javascript
+// Add to TEST_SCENARIOS object
+customScenario: {
+  name: "Custom Test",
+  description: "My specific test case",
+  currentCounts: { high: 2, medium: 5, low: 8, total: 15 },
+  tickets: [
+    {
+      key: 'TEST-1',
+      summary: 'Test ticket summary',
+      status: 'Open',
+      priorityLevel: 50,
+      ageInDays: 10,
+      totalStatusTransitions: 1,
+      totalPriorityLevelTransitions: 0,
+      totalLabelTransitions: 0
+    }
+  ]
+}
+```
+
 ## Support
 
 For issues or questions:
-1. Check the troubleshooting section above
-2. Verify your Jira API token and permissions
-3. Check browser console for error messages
-4. Ensure your Jira instance is accessible
+1. **Use the test scenarios** to isolate the problem
+2. **Check the debug logs panel** for error details
+3. **Export logs** and include them when reporting issues
+4. Verify your Jira API token and permissions (production mode)
+5. Ensure your Jira instance is accessible (production mode)
