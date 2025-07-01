@@ -924,15 +924,6 @@
                     throw new Error(errorMsg);
                 }
 
-                if (endpoint === 'test-connection') {
-                    if (!data.apiToken || data.apiToken.length < 10) {
-                        throw new Error('Invalid API token - must be at least 10 characters');
-                    }
-                    return {
-                        success: true,
-                        user: { displayName: 'Robert Mohid', emailAddress: data.email }
-                    };
-                }
 
                 if (endpoint === 'current-tickets') {
                     const endTime = performance.now();
@@ -1219,22 +1210,6 @@
                 setJiraConfig(prev => ({ ...prev, jqlQuery: newJQL }));
             }, [timePeriod, customDays, jiraConfig.project]);
 
-            // Test connection
-            const testConnection = async () => {
-                setLoading(true);
-                setError(null);
-                
-                try {
-                    await jiraAPI('test-connection', jiraConfig);
-                    setConnectionStatus('connected');
-                    setLastSync(new Date().toISOString());
-                } catch (err) {
-                    setConnectionStatus('error');
-                    setError(err.message);
-                } finally {
-                    setLoading(false);
-                }
-            };
 
             // Fetch data
             const fetchData = async () => {
@@ -1471,15 +1446,6 @@
                                     >
                                         <SettingsIcon />
                                         <span className="ml-2">{showConfig ? 'Hide Config' : 'Show Config'}</span>
-                                    </button>
-                                    
-                                    <button
-                                        onClick={testConnection}
-                                        disabled={loading || (isProductionMode && !jiraConfig.apiToken)}
-                                        className="flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300"
-                                    >
-                                        <DatabaseIcon />
-                                        <span className="ml-2">Test Connection</span>
                                     </button>
                                     
                                     <button
