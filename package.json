@@ -1,0 +1,32 @@
+{
+  "name": "jira-analytics-local",
+  "version": "1.0.0",
+  "description": "Local Jira Analytics Dashboard - Minimal 3-file setup",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "demo": "echo 'Opening demo mode...' && open http://localhost:8080 && python3 -m http.server 8080 2>/dev/null || python -m http.server 8080 2>/dev/null || echo 'Install Python or use: npx serve .'",
+    "serve": "npx serve .",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "jira",
+    "analytics",
+    "dashboard",
+    "local",
+    "minimal"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
