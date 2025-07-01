@@ -784,14 +784,14 @@ app.post('/api/jira/historical-data', async (req, res) => {
     // Calculate source label distribution from all tickets
     const sourceLabelsMap = {};
     const colors = {
-      'src-bug-fix': '#ef4444',
+      'src-bug-fix': '#ff6b00',
       'src-new-feature': '#3b82f6', 
       'src-tech-debt': '#f59e0b',
       'src-maintenance': '#6b7280',
       'src-enhancement': '#8b5cf6',
       'src-research': '#059669',
       'src-critical': '#7c2d12',
-      'src-golive-critical': '#ff6b00', // Bright orange - very distinct
+      'src-golive-critical': '#ef4444', // Red - very distinct
       'src-integration': '#0891b2',
       'src-unknown': '#94a3b8'
     };
