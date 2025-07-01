@@ -1,15 +1,4 @@
-                        {/* Charts Status */}
-                        {!ChartsAvailable && (
-                            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-yellow-700">
-                                <strong>Charts Loading:</strong> Using fallback visualizations. Recharts CDN may be slow to load.
-                            </div>
-                        )}
-
-                        {ChartsAvailable && (
-                            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded text-green-700">
-                                <strong>Charts Ready:</strong> Full interactive visualizations available.
-                            </div>
-                        )}<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -207,14 +196,39 @@
             const [isProductionMode, setIsProductionMode] = useState(false);
             const [cacheStatus, setCacheStatus] = useState(null);
 
+            // Load saved config from localStorage
+            const loadSavedConfig = () => {
+                try {
+                    const saved = localStorage.getItem('jiraConfig');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        return {
+                            baseUrl: parsed.baseUrl || 'https://komutel.atlassian.net',
+                            email: parsed.email || 'robert.mohid@versaterm.com',
+                            apiToken: parsed.apiToken || '',
+                            project: parsed.project || 'KSD',
+                            jqlQuery: parsed.jqlQuery || 'project = KSD AND cf[11129] > 0 AND created >= -30d ORDER BY created DESC'
+                        };
+                    }
+                } catch (e) {
+                    console.error('Error loading saved config:', e);
+                }
+                return {
+                    baseUrl: 'https://komutel.atlassian.net',
+                    email: 'robert.mohid@versaterm.com',
+                    apiToken: '',
+                    project: 'KSD',
+                    jqlQuery: 'project = KSD AND cf[11129] > 0 AND created >= -30d ORDER BY created DESC'
+                };
+            };
+
             // Jira configuration
-            const [jiraConfig, setJiraConfig] = useState({
-                baseUrl: 'https://komutel.atlassian.net',
-                email: 'robert.mohid@versaterm.com',
-                apiToken: '',
-                project: 'KSD',
-                jqlQuery: 'project = KSD AND cf[11129] > 0 AND created >= -30d ORDER BY created DESC'
-            });
+            const [jiraConfig, setJiraConfig] = useState(loadSavedConfig());
+
+            // Time period and interval settings
+            const [timePeriod, setTimePeriod] = useState('30d'); // 7d, 30d, 90d, 180d, 365d, custom
+            const [timeInterval, setTimeInterval] = useState('daily'); // daily, weekly, monthly
+            const [customDays, setCustomDays] = useState(30);
 
             // Production API calls (would connect to real backend)
             const productionJiraAPI = async (endpoint, data = {}) => {
@@ -306,12 +320,19 @@
                 }
 
                 if (endpoint === 'historical-data') {
-                    // Generate time series data
+                    // Generate time series data based on time period and interval
                     const generateTimeSeries = () => {
                         const series = [];
-                        for (let i = 0; i <= 30; i++) {
+                        const days = data.timePeriod === 'custom' ? data.customDays : parseInt(data.timePeriod.replace('d', ''));
+                        const interval = data.timeInterval || 'daily';
+                        
+                        let step = 1;
+                        if (interval === 'weekly') step = 7;
+                        if (interval === 'monthly') step = 30;
+                        
+                        for (let i = 0; i <= days; i += step) {
                             const date = new Date();
-                            date.setDate(date.getDate() - (30 - i));
+                            date.setDate(date.getDate() - (days - i));
                             
                             const baseHigh = Math.max(1, 12 - Math.floor(i / 5) + Math.floor(Math.random() * 4) - 2);
                             const baseMedium = Math.max(1, 25 - Math.floor(i / 8) + Math.floor(Math.random() * 8) - 4);
@@ -319,10 +340,10 @@
 
                             series.push({
                                 date: date.toISOString().split('T')[0],
-                                high: baseHigh,
-                                medium: baseMedium,
-                                low: baseLow,
-                                total: baseHigh + baseMedium + baseLow
+                                high: baseHigh * (interval === 'weekly' ? 7 : interval === 'monthly' ? 30 : 1),
+                                medium: baseMedium * (interval === 'weekly' ? 7 : interval === 'monthly' ? 30 : 1),
+                                low: baseLow * (interval === 'weekly' ? 7 : interval === 'monthly' ? 30 : 1),
+                                total: (baseHigh + baseMedium + baseLow) * (interval === 'weekly' ? 7 : interval === 'monthly' ? 30 : 1)
                             });
                         }
                         return series;
@@ -331,22 +352,34 @@
                     // Generate source labels time series
                     const generateSourceTimeSeries = () => {
                         const series = [];
-                        for (let i = 0; i <= 30; i++) {
+                        const days = data.timePeriod === 'custom' ? data.customDays : parseInt(data.timePeriod.replace('d', ''));
+                        const interval = data.timeInterval || 'daily';
+                        
+                        let step = 1;
+                        if (interval === 'weekly') step = 7;
+                        if (interval === 'monthly') step = 30;
+                        
+                        for (let i = 0; i <= days; i += step) {
                             const date = new Date();
-                            date.setDate(date.getDate() - (30 - i));
+                            date.setDate(date.getDate() - (days - i));
                             
-                            const dayOffset = i / 30;
+                            const dayOffset = i / days;
+                            const mult = interval === 'weekly' ? 7 : interval === 'monthly' ? 30 : 1;
                             
-                            series.push({
+                            const sourceData = {
                                 date: date.toISOString().split('T')[0],
-                                'src-bug-fix': Math.max(0, 8 + Math.floor(Math.sin(dayOffset * Math.PI * 2) * 4) + Math.floor(Math.random() * 3)),
-                                'src-new-feature': Math.max(0, 4 + Math.floor(Math.cos(dayOffset * Math.PI * 1.5) * 2) + Math.floor(Math.random() * 2)),
-                                'src-tech-debt': Math.max(0, 3 + Math.floor(dayOffset * 2) + Math.floor(Math.random() * 2)),
-                                'src-maintenance': Math.max(0, 2 + Math.floor(Math.random() * 2)),
-                                'src-enhancement': Math.max(0, 2 + Math.floor(Math.sin(dayOffset * Math.PI * 3) * 2) + Math.floor(Math.random() * 2)),
-                                'src-research': Math.max(0, 1 + Math.floor(Math.cos(dayOffset * Math.PI * 0.5) * 1) + Math.floor(Math.random() * 2)),
-                                'src-critical': Math.max(0, 1 + Math.floor(Math.random() * 2))
-                            });
+                                'src-bug-fix': Math.max(0, (8 + Math.floor(Math.sin(dayOffset * Math.PI * 2) * 4) + Math.floor(Math.random() * 3)) * mult),
+                                'src-golive-critical': Math.max(0, (5 + Math.floor(Math.cos(dayOffset * Math.PI * 1.8) * 3) + Math.floor(Math.random() * 2)) * mult),
+                                'src-new-feature': Math.max(0, (4 + Math.floor(Math.cos(dayOffset * Math.PI * 1.5) * 2) + Math.floor(Math.random() * 2)) * mult),
+                                'src-integration': Math.max(0, (2 + Math.floor(Math.sin(dayOffset * Math.PI * 2.5) * 1) + Math.floor(Math.random() * 2)) * mult),
+                                'src-tech-debt': Math.max(0, (3 + Math.floor(dayOffset * 2) + Math.floor(Math.random() * 2)) * mult),
+                                'src-unknown': Math.max(0, (1 + Math.floor(Math.random() * 1)) * mult),
+                                'src-maintenance': Math.max(0, (2 + Math.floor(Math.random() * 2)) * mult),
+                                'src-enhancement': Math.max(0, (2 + Math.floor(Math.sin(dayOffset * Math.PI * 3) * 2) + Math.floor(Math.random() * 2)) * mult),
+                                'src-research': Math.max(0, (1 + Math.floor(Math.cos(dayOffset * Math.PI * 0.5) * 1) + Math.floor(Math.random() * 2)) * mult),
+                                'src-critical': Math.max(0, (1 + Math.floor(Math.random() * 2)) * mult)
+                            };
+                            series.push(sourceData);
                         }
                         return series;
                     };
@@ -354,11 +387,18 @@
                     // Generate average age time series
                     const generateAverageAgeTimeSeries = () => {
                         const series = [];
-                        for (let i = 0; i <= 30; i++) {
+                        const days = data.timePeriod === 'custom' ? data.customDays : parseInt(data.timePeriod.replace('d', ''));
+                        const interval = data.timeInterval || 'daily';
+                        
+                        let step = 1;
+                        if (interval === 'weekly') step = 7;
+                        if (interval === 'monthly') step = 30;
+                        
+                        for (let i = 0; i <= days; i += step) {
                             const date = new Date();
-                            date.setDate(date.getDate() - (30 - i));
+                            date.setDate(date.getDate() - (days - i));
                             
-                            const dayOffset = i / 30;
+                            const dayOffset = i / days;
                             
                             series.push({
                                 date: date.toISOString().split('T')[0],
@@ -371,14 +411,17 @@
                     };
 
                     const sourceLabels = [
-                        { name: 'Bug Fix', label: 'src-bug-fix', count: 34, percentage: 35, color: '#ef4444' },
-                        { name: 'New Feature', label: 'src-new-feature', count: 18, percentage: 18, color: '#3b82f6' },
-                        { name: 'Tech Debt', label: 'src-tech-debt', count: 15, percentage: 15, color: '#f59e0b' },
-                        { name: 'Maintenance', label: 'src-maintenance', count: 12, percentage: 12, color: '#6b7280' },
-                        { name: 'Enhancement', label: 'src-enhancement', count: 10, percentage: 10, color: '#8b5cf6' },
-                        { name: 'Research', label: 'src-research', count: 6, percentage: 6, color: '#059669' },
-                        { name: 'Critical', label: 'src-critical', count: 4, percentage: 4, color: '#7c2d12' }
-                    ];
+                        { name: 'Bug Fix', label: 'src-bug-fix', count: 45, percentage: 35, color: '#ef4444' },
+                        { name: 'Golive Critical', label: 'src-golive-critical', count: 28, percentage: 22, color: '#dc2626' },
+                        { name: 'New Feature', label: 'src-new-feature', count: 18, percentage: 14, color: '#3b82f6' },
+                        { name: 'Integration', label: 'src-integration', count: 12, percentage: 9, color: '#0891b2' },
+                        { name: 'Tech Debt', label: 'src-tech-debt', count: 10, percentage: 8, color: '#f59e0b' },
+                        { name: 'Unknown', label: 'src-unknown', count: 6, percentage: 5, color: '#94a3b8' },
+                        { name: 'Maintenance', label: 'src-maintenance', count: 4, percentage: 3, color: '#6b7280' },
+                        { name: 'Enhancement', label: 'src-enhancement', count: 3, percentage: 2, color: '#8b5cf6' },
+                        { name: 'Research', label: 'src-research', count: 2, percentage: 2, color: '#059669' },
+                        { name: 'Critical', label: 'src-critical', count: 1, percentage: 1, color: '#7c2d12' }
+                    ].sort((a, b) => b.count - a.count);
 
                     return {
                         timeSeries: generateTimeSeries(),
@@ -393,6 +436,18 @@
 
             // API client selector
             const jiraAPI = isProductionMode ? productionJiraAPI : simulateJiraAPI;
+
+            // Helper function to generate JQL query based on time period
+            const generateJQL = () => {
+                const days = timePeriod === 'custom' ? customDays : timePeriod.replace('d', '');
+                return `project = ${jiraConfig.project} AND cf[11129] > 0 AND created >= -${days}d ORDER BY created DESC`;
+            };
+
+            // Update JQL when time period changes
+            useEffect(() => {
+                const newJQL = generateJQL();
+                setJiraConfig(prev => ({ ...prev, jqlQuery: newJQL }));
+            }, [timePeriod, customDays, jiraConfig.project]);
 
             // Test connection
             const testConnection = async () => {
@@ -423,8 +478,8 @@
 
                 try {
                     const [currentData, historicalData] = await Promise.all([
-                        jiraAPI('current-tickets', jiraConfig),
-                        jiraAPI('historical-data', jiraConfig)
+                        jiraAPI('current-tickets', { ...jiraConfig, timePeriod, timeInterval }),
+                        jiraAPI('historical-data', { ...jiraConfig, timePeriod, timeInterval })
                     ]);
 
                     setRealData({
@@ -454,6 +509,22 @@
                     fetchData();
                 }
             }, [isProductionMode]);
+
+            // Auto-refresh when time period or interval changes
+            useEffect(() => {
+                if (realData && (connectionStatus === 'connected' || !isProductionMode)) {
+                    fetchData();
+                }
+            }, [timePeriod, timeInterval, customDays]);
+
+            // Save config to localStorage whenever it changes
+            useEffect(() => {
+                try {
+                    localStorage.setItem('jiraConfig', JSON.stringify(jiraConfig));
+                } catch (e) {
+                    console.error('Error saving config:', e);
+                }
+            }, [jiraConfig]);
 
             // Custom tooltips
             const CustomTooltip = ({ active, payload, label }) => {
@@ -568,6 +639,47 @@
                                             Production
                                         </span>
                                     </div>
+
+                                    {/* Time Period Selector */}
+                                    <div className="flex items-center space-x-2 px-4 py-2 bg-gray-100 rounded-lg">
+                                        <span className="text-sm font-medium text-gray-700">Period:</span>
+                                        <select
+                                            value={timePeriod}
+                                            onChange={(e) => setTimePeriod(e.target.value)}
+                                            className="text-sm border border-gray-300 rounded px-2 py-1"
+                                        >
+                                            <option value="7d">Last 7 days</option>
+                                            <option value="30d">Last 30 days</option>
+                                            <option value="90d">Last 90 days</option>
+                                            <option value="180d">Last 180 days</option>
+                                            <option value="365d">Last year</option>
+                                            <option value="custom">Custom</option>
+                                        </select>
+                                        {timePeriod === 'custom' && (
+                                            <input
+                                                type="number"
+                                                value={customDays}
+                                                onChange={(e) => setCustomDays(Math.max(1, parseInt(e.target.value) || 1))}
+                                                className="w-16 text-sm border border-gray-300 rounded px-2 py-1"
+                                                min="1"
+                                                max="730"
+                                            />
+                                        )}
+                                    </div>
+
+                                    {/* Time Interval Selector */}
+                                    <div className="flex items-center space-x-2 px-4 py-2 bg-gray-100 rounded-lg">
+                                        <span className="text-sm font-medium text-gray-700">Interval:</span>
+                                        <select
+                                            value={timeInterval}
+                                            onChange={(e) => setTimeInterval(e.target.value)}
+                                            className="text-sm border border-gray-300 rounded px-2 py-1"
+                                        >
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                    </div>
                                     
                                     <button
                                         onClick={() => setShowConfig(!showConfig)}
@@ -653,13 +765,20 @@
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium mb-2">API Token</label>
+                                            <label className="block text-sm font-medium mb-2">
+                                                API Token
+                                                {jiraConfig.apiToken && (
+                                                    <span className="ml-2 text-xs text-green-600 font-normal">
+                                                        (Saved locally)
+                                                    </span>
+                                                )}
+                                            </label>
                                             <input
                                                 type="password"
                                                 value={jiraConfig.apiToken}
                                                 onChange={(e) => setJiraConfig(prev => ({ ...prev, apiToken: e.target.value }))}
                                                 className="w-full border border-gray-300 rounded px-3 py-2"
-                                                placeholder="Your Jira API token"
+                                                placeholder={jiraConfig.apiToken ? "••••••••••••••••••••" : "Your Jira API token"}
                                                 autoComplete="new-password"
                                                 data-lpignore="true"
                                                 data-form-type="other"
@@ -706,28 +825,28 @@
                                             {[
                                                 {
                                                     name: 'High Priority (PL < 10)',
-                                                    query: 'project = KSD AND cf[11129] < 10 AND status not in ("Done", "Closed") ORDER BY cf[11129] ASC'
+                                                    query: () => `project = ${jiraConfig.project} AND cf[11129] < 10 AND status not in ("Done", "Closed") ORDER BY cf[11129] ASC`
                                                 },
                                                 {
-                                                    name: 'Recent 30 Days',
-                                                    query: 'project = KSD AND cf[11129] > 0 AND created >= -30d ORDER BY created DESC'
+                                                    name: 'Current Time Period',
+                                                    query: () => generateJQL()
                                                 },
                                                 {
                                                     name: 'Source Label Analysis',
-                                                    query: 'project = KSD AND labels in ("src-bug-fix", "src-new-feature", "src-tech-debt") AND created >= -60d'
+                                                    query: () => `project = ${jiraConfig.project} AND labels in ("src-bug-fix", "src-new-feature", "src-tech-debt") AND created >= -${timePeriod === 'custom' ? customDays : timePeriod.replace('d', '')}d`
                                                 },
                                                 {
                                                     name: 'All Active Tickets',
-                                                    query: 'project = KSD AND status not in ("Done", "Closed", "Resolved") ORDER BY cf[11129] ASC'
+                                                    query: () => `project = ${jiraConfig.project} AND status not in ("Done", "Closed", "Resolved") ORDER BY cf[11129] ASC`
                                                 }
                                             ].map((template, index) => (
                                                 <button
                                                     key={index}
-                                                    onClick={() => setJiraConfig(prev => ({ ...prev, jqlQuery: template.query }))}
+                                                    onClick={() => setJiraConfig(prev => ({ ...prev, jqlQuery: typeof template.query === 'function' ? template.query() : template.query }))}
                                                     className="text-left p-2 border border-gray-200 rounded hover:bg-blue-50 hover:border-blue-300"
                                                 >
                                                     <div className="font-medium text-sm text-blue-700">{template.name}</div>
-                                                    <div className="text-xs text-gray-500 font-mono truncate">{template.query}</div>
+                                                    <div className="text-xs text-gray-500 font-mono truncate">{typeof template.query === 'function' ? template.query() : template.query}</div>
                                                 </button>
                                             ))}
                                         </div>
@@ -742,6 +861,24 @@
                                             </a>
                                         </div>
                                     )}
+                                    
+                                    {jiraConfig.apiToken && (
+                                        <div className="mt-4 flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded">
+                                            <span className="text-green-700">
+                                                <strong>API Token Saved:</strong> Your credentials are stored locally
+                                            </span>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Are you sure you want to clear your saved API token?')) {
+                                                        setJiraConfig(prev => ({ ...prev, apiToken: '' }));
+                                                    }
+                                                }}
+                                                className="text-sm px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                            >
+                                                Clear Token
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -751,12 +888,6 @@
                                 </div>
                             )}
 
-                            {/* Charts Status - only show if charts are still loading */}
-                            {!ChartsAvailable && (
-                                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-yellow-700">
-                                    <strong>Charts Loading:</strong> Using fallback visualizations. Recharts CDN may be slow to load.
-                                </div>
-                            )}
                         </div>
 
                         {/* Current Status Cards */}
@@ -805,12 +936,24 @@
                         {realData && realData.historicalTrend && (
                             <div className="chart-container p-6">
                                 <h3 className="text-lg font-semibold mb-4">
-                                    Historical Ticket Trends ({jiraConfig.project} Project)
+                                    Historical Ticket Trends ({jiraConfig.project} Project) - {
+                                        timePeriod === 'custom' ? `Last ${customDays} days` : 
+                                        timePeriod === '7d' ? 'Last 7 days' :
+                                        timePeriod === '30d' ? 'Last 30 days' :
+                                        timePeriod === '90d' ? 'Last 90 days' :
+                                        timePeriod === '180d' ? 'Last 180 days' :
+                                        timePeriod === '365d' ? 'Last year' : ''
+                                    } ({timeInterval === 'daily' ? 'Daily' : timeInterval === 'weekly' ? 'Weekly' : 'Monthly'})
                                 </h3>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <LineChart data={realData.historicalTrend}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="date" />
+                                        <XAxis 
+                                            dataKey="date" 
+                                            angle={timeInterval === 'monthly' ? -45 : 0}
+                                            textAnchor={timeInterval === 'monthly' ? 'end' : 'middle'}
+                                            height={timeInterval === 'monthly' ? 60 : 30}
+                                        />
                                         <YAxis />
                                         <Tooltip content={<CustomTooltip />} />
                                         <Legend />
@@ -839,13 +982,15 @@
                                                 <YAxis />
                                                 <Tooltip content={<CustomTooltip />} />
                                                 <Legend />
-                                                <Bar dataKey="src-bug-fix" stackId="a" fill="#ef4444" name="Bug Fix" />
-                                                <Bar dataKey="src-new-feature" stackId="a" fill="#3b82f6" name="New Feature" />
-                                                <Bar dataKey="src-tech-debt" stackId="a" fill="#f59e0b" name="Tech Debt" />
-                                                <Bar dataKey="src-maintenance" stackId="a" fill="#6b7280" name="Maintenance" />
-                                                <Bar dataKey="src-enhancement" stackId="a" fill="#8b5cf6" name="Enhancement" />
-                                                <Bar dataKey="src-research" stackId="a" fill="#059669" name="Research" />
-                                                <Bar dataKey="src-critical" stackId="a" fill="#7c2d12" name="Critical" />
+                                                {realData.sourceLabels?.map((source, index) => (
+                                                    <Bar 
+                                                        key={source.label} 
+                                                        dataKey={source.label} 
+                                                        stackId="a" 
+                                                        fill={source.color} 
+                                                        name={source.name} 
+                                                    />
+                                                ))}
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -888,10 +1033,15 @@
                                                     <YAxis />
                                                     <Tooltip content={<CustomTooltip />} />
                                                     <Legend />
-                                                    <Bar dataKey="src-bug-fix" stackId="a" fill="#ef4444" name="Bug Fix" />
-                                                    <Bar dataKey="src-new-feature" stackId="a" fill="#3b82f6" name="New Feature" />
-                                                    <Bar dataKey="src-tech-debt" stackId="a" fill="#f59e0b" name="Tech Debt" />
-                                                    <Bar dataKey="src-maintenance" stackId="a" fill="#6b7280" name="Maintenance" />
+                                                    {realData.sourceLabels?.slice(0, 8).map((source, index) => (
+                                                        <Bar 
+                                                            key={source.label} 
+                                                            dataKey={source.label} 
+                                                            stackId="a" 
+                                                            fill={source.color} 
+                                                            name={source.name} 
+                                                        />
+                                                    ))}
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         </div>
@@ -918,7 +1068,7 @@
                             </div>
                         )}
 
-                        {/* Recent Tickets Table */}
+                        {/* Recent Tickets Table with Transition History */}
                         {realData && realData.tickets && (
                             <div className="chart-container p-6">
                                 <h3 className="text-lg font-semibold mb-4">Recent Tickets from {jiraConfig.project}</h3>
@@ -928,8 +1078,9 @@
                                             <tr className="border-b">
                                                 <th className="text-left py-2">Key</th>
                                                 <th className="text-left py-2">Summary</th>
-                                                <th className="text-left py-2">Status</th>
-                                                <th className="text-left py-2">Priority Level</th>
+                                                <th className="text-left py-2">Current Status</th>
+                                                <th className="text-left py-2">Current PL</th>
+                                                <th className="text-left py-2">Transitions</th>
                                                 <th className="text-left py-2">Age (Days)</th>
                                             </tr>
                                         </thead>
@@ -937,28 +1088,131 @@
                                             {realData.tickets.slice(0, 10).map((ticket, index) => (
                                                 <tr key={index} className="border-b hover:bg-gray-50">
                                                     <td className="py-2 font-medium text-blue-600">{ticket.key}</td>
-                                                    <td className="py-2 max-w-xs truncate">{ticket.summary}</td>
+                                                    <td className="py-2 max-w-xs truncate" title={ticket.summary}>{ticket.summary}</td>
                                                     <td className="py-2">
-                                                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                                                            {ticket.status}
-                                                        </span>
+                                                        <div className="flex flex-col">
+                                                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mb-1">
+                                                                {ticket.currentStatus?.value || ticket.status}
+                                                            </span>
+                                                            {ticket.currentStatus?.lastChangedBy && (
+                                                                <span className="text-xs text-gray-500">
+                                                                    by {ticket.currentStatus.lastChangedBy}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                     <td className="py-2">
-                                                        <span className={`px-2 py-1 rounded text-xs ${
-                                                            ticket.priorityLevel < 10 
-                                                                ? 'bg-red-100 text-red-800' 
-                                                                : ticket.priorityLevel < 100 
-                                                                ? 'bg-yellow-100 text-yellow-800'
-                                                                : 'bg-blue-100 text-blue-800'
-                                                        }`}>
-                                                            {ticket.priorityLevel || 'N/A'}
-                                                        </span>
+                                                        <div className="flex flex-col">
+                                                            <span className={`px-2 py-1 rounded text-xs mb-1 ${
+                                                                (ticket.currentPriorityLevel?.value || ticket.priorityLevel) < 10 
+                                                                    ? 'bg-red-100 text-red-800' 
+                                                                    : (ticket.currentPriorityLevel?.value || ticket.priorityLevel) < 100 
+                                                                    ? 'bg-yellow-100 text-yellow-800'
+                                                                    : 'bg-blue-100 text-blue-800'
+                                                            }`}>
+                                                                {ticket.currentPriorityLevel?.value || ticket.priorityLevel || 'N/A'}
+                                                            </span>
+                                                            {ticket.currentPriorityLevel?.lastChangedBy && (
+                                                                <span className="text-xs text-gray-500">
+                                                                    by {ticket.currentPriorityLevel.lastChangedBy}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-2">
+                                                        <div className="text-xs text-gray-600">
+                                                            <div>Status: {ticket.totalStatusTransitions || 0}</div>
+                                                            <div>PL: {ticket.totalPriorityLevelTransitions || 0}</div>
+                                                            <div>Labels: {ticket.totalLabelTransitions || 0}</div>
+                                                        </div>
                                                     </td>
                                                     <td className="py-2">{ticket.ageInDays}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Transition History Analysis */}
+                        {realData && realData.tickets && (
+                            <div className="chart-container p-6">
+                                <h3 className="text-lg font-semibold mb-4">Transition Analysis</h3>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                    {/* Status Transition Summary */}
+                                    <div className="bg-blue-50 p-4 rounded-lg">
+                                        <h4 className="font-medium text-blue-800 mb-2">Status Transitions</h4>
+                                        <div className="text-2xl font-bold text-blue-900">
+                                            {realData.tickets.reduce((sum, ticket) => sum + (ticket.totalStatusTransitions || 0), 0)}
+                                        </div>
+                                        <div className="text-sm text-blue-600">
+                                            Avg: {(realData.tickets.reduce((sum, ticket) => sum + (ticket.totalStatusTransitions || 0), 0) / realData.tickets.length).toFixed(1)} per ticket
+                                        </div>
+                                    </div>
+
+                                    {/* Priority Level Transition Summary */}
+                                    <div className="bg-yellow-50 p-4 rounded-lg">
+                                        <h4 className="font-medium text-yellow-800 mb-2">Priority Level Changes</h4>
+                                        <div className="text-2xl font-bold text-yellow-900">
+                                            {realData.tickets.reduce((sum, ticket) => sum + (ticket.totalPriorityLevelTransitions || 0), 0)}
+                                        </div>
+                                        <div className="text-sm text-yellow-600">
+                                            Avg: {(realData.tickets.reduce((sum, ticket) => sum + (ticket.totalPriorityLevelTransitions || 0), 0) / realData.tickets.length).toFixed(1)} per ticket
+                                        </div>
+                                    </div>
+
+                                    {/* Label Transition Summary */}
+                                    <div className="bg-green-50 p-4 rounded-lg">
+                                        <h4 className="font-medium text-green-800 mb-2">Label Changes</h4>
+                                        <div className="text-2xl font-bold text-green-900">
+                                            {realData.tickets.reduce((sum, ticket) => sum + (ticket.totalLabelTransitions || 0), 0)}
+                                        </div>
+                                        <div className="text-sm text-green-600">
+                                            Avg: {(realData.tickets.reduce((sum, ticket) => sum + (ticket.totalLabelTransitions || 0), 0) / realData.tickets.length).toFixed(1)} per ticket
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Most Active Tickets */}
+                                <div>
+                                    <h4 className="font-medium mb-3">Most Active Tickets (by total transitions)</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b bg-gray-50">
+                                                    <th className="text-left py-2 px-2">Ticket</th>
+                                                    <th className="text-left py-2 px-2">Status Changes</th>
+                                                    <th className="text-left py-2 px-2">PL Changes</th>
+                                                    <th className="text-left py-2 px-2">Label Changes</th>
+                                                    <th className="text-left py-2 px-2">Total Activity</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {realData.tickets
+                                                    .map(ticket => ({
+                                                        ...ticket,
+                                                        totalActivity: (ticket.totalStatusTransitions || 0) + 
+                                                                     (ticket.totalPriorityLevelTransitions || 0) + 
+                                                                     (ticket.totalLabelTransitions || 0)
+                                                    }))
+                                                    .filter(ticket => ticket.totalActivity > 0)
+                                                    .sort((a, b) => b.totalActivity - a.totalActivity)
+                                                    .slice(0, 5)
+                                                    .map((ticket, index) => (
+                                                        <tr key={index} className="border-b hover:bg-gray-50">
+                                                            <td className="py-2 px-2 font-medium text-blue-600">{ticket.key}</td>
+                                                            <td className="py-2 px-2 text-center">{ticket.totalStatusTransitions || 0}</td>
+                                                            <td className="py-2 px-2 text-center">{ticket.totalPriorityLevelTransitions || 0}</td>
+                                                            <td className="py-2 px-2 text-center">{ticket.totalLabelTransitions || 0}</td>
+                                                            <td className="py-2 px-2 text-center font-bold">{ticket.totalActivity}</td>
+                                                        </tr>
+                                                    ))
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         )}

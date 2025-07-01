@@ -191,6 +191,127 @@ const extractSourceLabels = (labels) => {
   return labels?.filter(label => label.startsWith('src-')) || [];
 };
 
+// Helper function to extract history transitions from changelog
+const extractTransitionHistory = (changelog) => {
+  if (!changelog || !changelog.histories) {
+    return {
+      statusTransitions: [],
+      priorityLevelTransitions: [],
+      labelTransitions: []
+    };
+  }
+
+  const statusTransitions = [];
+  const priorityLevelTransitions = [];
+  const labelTransitions = [];
+
+  changelog.histories.forEach(history => {
+    const timestamp = history.created;
+    const author = history.author;
+
+    history.items.forEach(item => {
+      if (item.field === 'status') {
+        statusTransitions.push({
+          timestamp,
+          author: author?.displayName || author?.name || 'Unknown',
+          fromValue: item.fromString || null,
+          toValue: item.toString || null,
+          fromId: item.from || null,
+          toId: item.to || null
+        });
+      }
+      
+      if (item.field === 'customfield_11129') { // Priority Level field
+        priorityLevelTransitions.push({
+          timestamp,
+          author: author?.displayName || author?.name || 'Unknown',
+          fromValue: item.fromString ? parseInt(item.fromString) : null,
+          toValue: item.toString ? parseInt(item.toString) : null
+        });
+      }
+      
+      if (item.field === 'labels') {
+        labelTransitions.push({
+          timestamp,
+          author: author?.displayName || author?.name || 'Unknown',
+          fromValue: item.fromString ? item.fromString.split(' ') : [],
+          toValue: item.toString ? item.toString.split(' ') : [],
+          added: item.toString ? item.toString.split(' ').filter(label => 
+            !item.fromString || !item.fromString.split(' ').includes(label)
+          ) : [],
+          removed: item.fromString ? item.fromString.split(' ').filter(label => 
+            !item.toString || !item.toString.split(' ').includes(label)
+          ) : []
+        });
+      }
+    });
+  });
+
+  // Sort transitions by timestamp (oldest first)
+  statusTransitions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  priorityLevelTransitions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  labelTransitions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  return {
+    statusTransitions,
+    priorityLevelTransitions,
+    labelTransitions
+  };
+};
+
+// Helper functions for time-based aggregation
+const getWeekStart = (date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day;
+  return new Date(d.setDate(diff)).toISOString().split('T')[0];
+};
+
+const getMonthStart = (date) => {
+  const d = new Date(date);
+  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+};
+
+const aggregateByInterval = (tickets, interval) => {
+  const aggregated = {};
+  
+  tickets.forEach(ticket => {
+    let key;
+    const date = ticket.created.split('T')[0];
+    
+    switch(interval) {
+      case 'weekly':
+        key = getWeekStart(date);
+        break;
+      case 'monthly':
+        key = getMonthStart(date);
+        break;
+      case 'daily':
+      default:
+        key = date;
+        break;
+    }
+    
+    if (!aggregated[key]) {
+      aggregated[key] = {
+        date: key,
+        high: 0,
+        medium: 0,
+        low: 0,
+        unknown: 0,
+        total: 0,
+        tickets: []
+      };
+    }
+    
+    aggregated[key][ticket.priorityCategory]++;
+    aggregated[key].total++;
+    aggregated[key].tickets.push(ticket);
+  });
+  
+  return Object.values(aggregated).sort((a, b) => new Date(a.date) - new Date(b.date));
+};
+
 // Test Jira connection
 app.post('/api/jira/test-connection', async (req, res) => {
   try {
@@ -222,7 +343,7 @@ app.post('/api/jira/test-connection', async (req, res) => {
 });
 
 // Helper function to batch JQL queries for large result sets
-const batchJQLQuery = async (jira, jql, fields, maxResults = 2000) => {
+const batchJQLQuery = async (jira, jql, fields, maxResults = 2000, expand = []) => {
   const batchSize = 100; // Jira's recommended batch size
   let allIssues = [];
   let startAt = 0;
@@ -234,12 +355,18 @@ const batchJQLQuery = async (jira, jql, fields, maxResults = 2000) => {
   do {
     console.log(`Batch ${batchCount + 1}: Fetching issues ${startAt} to ${startAt + batchSize - 1}`);
     
-    const response = await jira.post('/search', {
+    const requestBody = {
       jql: jql,
       fields: fields,
       maxResults: batchSize,
       startAt: startAt
-    });
+    };
+    
+    if (expand.length > 0) {
+      requestBody.expand = expand;
+    }
+    
+    const response = await jira.post('/search', requestBody);
 
     const batchIssues = response.data.issues || [];
     allIssues = allIssues.concat(batchIssues);
@@ -278,7 +405,7 @@ const batchJQLQuery = async (jira, jql, fields, maxResults = 2000) => {
 // Get current ticket counts and details
 app.post('/api/jira/current-tickets', async (req, res) => {
   try {
-    const { baseUrl, email, apiToken, project, jqlQuery } = req.body;
+    const { baseUrl, email, apiToken, project, jqlQuery, timePeriod, timeInterval } = req.body;
     
     // Save configuration if provided
     if (baseUrl || email || project) {
@@ -335,14 +462,19 @@ app.post('/api/jira/current-tickets', async (req, res) => {
       'labels',
       'customfield_11129' // Priority Level field
     ];
+    
+    // We'll need to fetch changelog data separately for each issue
+    const expand = ['changelog'];
 
     // Use batched query for potentially large result sets
-    const batchResult = await batchJQLQuery(jira, searchJQL, fields, 2000);
+    const batchResult = await batchJQLQuery(jira, searchJQL, fields, 2000, expand);
 
     console.log(`Batched query results: ${batchResult.fetchedCount} issues from ${batchResult.batchCount} batches`);
 
     const tickets = batchResult.issues.map(issue => {
       const priorityLevel = getPriorityLevel(issue);
+      const transitionHistory = extractTransitionHistory(issue.changelog);
+      
       return {
         key: issue.key,
         summary: issue.fields.summary,
@@ -353,7 +485,49 @@ app.post('/api/jira/current-tickets', async (req, res) => {
         priorityCategory: categorizePriority(priorityLevel),
         ageInDays: calculateAge(issue.fields.created),
         labels: issue.fields.labels || [],
-        sourceLabels: extractSourceLabels(issue.fields.labels || [])
+        sourceLabels: extractSourceLabels(issue.fields.labels || []),
+        
+        // New transition history fields
+        statusTransitions: transitionHistory.statusTransitions,
+        priorityLevelTransitions: transitionHistory.priorityLevelTransitions,
+        labelTransitions: transitionHistory.labelTransitions,
+        
+        // Summary stats for quick access
+        totalStatusTransitions: transitionHistory.statusTransitions.length,
+        totalPriorityLevelTransitions: transitionHistory.priorityLevelTransitions.length,
+        totalLabelTransitions: transitionHistory.labelTransitions.length,
+        
+        // Current values with creation info
+        currentStatus: {
+          value: issue.fields.status.name,
+          id: issue.fields.status.id,
+          lastChanged: transitionHistory.statusTransitions.length > 0 ? 
+            transitionHistory.statusTransitions[transitionHistory.statusTransitions.length - 1].timestamp : 
+            issue.fields.created,
+          lastChangedBy: transitionHistory.statusTransitions.length > 0 ? 
+            transitionHistory.statusTransitions[transitionHistory.statusTransitions.length - 1].author : 
+            'System'
+        },
+        
+        currentPriorityLevel: {
+          value: priorityLevel,
+          lastChanged: transitionHistory.priorityLevelTransitions.length > 0 ? 
+            transitionHistory.priorityLevelTransitions[transitionHistory.priorityLevelTransitions.length - 1].timestamp : 
+            issue.fields.created,
+          lastChangedBy: transitionHistory.priorityLevelTransitions.length > 0 ? 
+            transitionHistory.priorityLevelTransitions[transitionHistory.priorityLevelTransitions.length - 1].author : 
+            'System'
+        },
+        
+        currentLabels: {
+          value: issue.fields.labels || [],
+          lastChanged: transitionHistory.labelTransitions.length > 0 ? 
+            transitionHistory.labelTransitions[transitionHistory.labelTransitions.length - 1].timestamp : 
+            issue.fields.created,
+          lastChangedBy: transitionHistory.labelTransitions.length > 0 ? 
+            transitionHistory.labelTransitions[transitionHistory.labelTransitions.length - 1].author : 
+            'System'
+        }
       };
     });
 
@@ -459,7 +633,7 @@ app.post('/api/jira/current-tickets', async (req, res) => {
 // Get historical data for time series analysis
 app.post('/api/jira/historical-data', async (req, res) => {
   try {
-    const { baseUrl, email, apiToken, project, jqlQuery } = req.body;
+    const { baseUrl, email, apiToken, project, jqlQuery, timePeriod, timeInterval } = req.body;
     
     // If no API token provided, try to load saved historical data
     if (!apiToken || apiToken === '') {
@@ -511,14 +685,18 @@ app.post('/api/jira/historical-data', async (req, res) => {
       'labels',
       'customfield_11129'
     ];
+    
+    const expand = ['changelog'];
 
     // Use batched query for historical data (can be large)
-    const batchResult = await batchJQLQuery(jira, historicalJQL, fields, 3000);
+    const batchResult = await batchJQLQuery(jira, historicalJQL, fields, 3000, expand);
 
     console.log(`Historical batched query results: ${batchResult.fetchedCount} issues from ${batchResult.batchCount} batches`);
 
     const tickets = batchResult.issues.map(issue => {
       const priorityLevel = getPriorityLevel(issue);
+      const transitionHistory = extractTransitionHistory(issue.changelog);
+      
       return {
         key: issue.key,
         summary: issue.fields.summary,
@@ -527,66 +705,65 @@ app.post('/api/jira/historical-data', async (req, res) => {
         priorityLevel: priorityLevel,
         priorityCategory: categorizePriority(priorityLevel),
         labels: issue.fields.labels || [],
-        sourceLabels: extractSourceLabels(issue.fields.labels || [])
+        sourceLabels: extractSourceLabels(issue.fields.labels || []),
+        
+        // Transition history
+        statusTransitions: transitionHistory.statusTransitions,
+        priorityLevelTransitions: transitionHistory.priorityLevelTransitions,
+        labelTransitions: transitionHistory.labelTransitions,
+        
+        // Summary stats
+        totalStatusTransitions: transitionHistory.statusTransitions.length,
+        totalPriorityLevelTransitions: transitionHistory.priorityLevelTransitions.length,
+        totalLabelTransitions: transitionHistory.labelTransitions.length
       };
     });
 
-    // Group tickets by date for time series
-    const timeSeriesData = {};
-    
+    // Use the aggregation helper based on the selected interval
+    const timeSeries = aggregateByInterval(tickets, timeInterval || 'daily');
+
+    // First, collect all unique source labels from ALL tickets (not just current period tickets)
+    const allSourceLabels = new Set();
     tickets.forEach(ticket => {
-      const date = ticket.created.split('T')[0];
-      
-      if (!timeSeriesData[date]) {
-        timeSeriesData[date] = {
-          date,
-          high: 0,
-          medium: 0,
-          low: 0,
-          unknown: 0,
-          total: 0
-        };
-      }
-      
-      timeSeriesData[date][ticket.priorityCategory]++;
-      timeSeriesData[date].total++;
+      ticket.sourceLabels.forEach(label => {
+        allSourceLabels.add(label);
+      });
     });
-
-    // Convert to array and sort by date
-    const timeSeries = Object.values(timeSeriesData).sort((a, b) => 
-      new Date(a.date) - new Date(b.date)
-    );
-
+    
+    console.log(`Found ${allSourceLabels.size} unique source labels:`, Array.from(allSourceLabels));
+    
     // Generate source labels time series based on actual labels found
-    const sourceLabelsTimeSeries = timeSeries.map(day => {
-      const dayTickets = tickets.filter(t => t.created.split('T')[0] === day.date);
+    const sourceLabelsTimeSeries = timeSeries.map(period => {
+      const periodTickets = period.tickets || [];
       const sourceCounts = {};
       
-      // Count actual source labels
-      dayTickets.forEach(ticket => {
+      // Initialize all labels with 0
+      allSourceLabels.forEach(label => {
+        sourceCounts[label] = 0;
+      });
+      
+      // Count actual source labels for this period
+      periodTickets.forEach(ticket => {
         ticket.sourceLabels.forEach(label => {
           sourceCounts[label] = (sourceCounts[label] || 0) + 1;
         });
       });
       
-      return {
-        date: day.date,
-        'src-bug-fix': sourceCounts['src-bug-fix'] || 0,
-        'src-new-feature': sourceCounts['src-new-feature'] || 0,
-        'src-tech-debt': sourceCounts['src-tech-debt'] || 0,
-        'src-maintenance': sourceCounts['src-maintenance'] || 0,
-        'src-enhancement': sourceCounts['src-enhancement'] || 0,
-        'src-research': sourceCounts['src-research'] || 0,
-        'src-critical': sourceCounts['src-critical'] || 0
-      };
+      // Create the result object with all found source labels
+      const result = { date: period.date };
+      allSourceLabels.forEach(label => {
+        result[label] = sourceCounts[label];
+      });
+      
+      return result;
     });
 
     // Generate average age time series based on actual data
-    const averageAgeTimeSeries = timeSeries.map(day => {
-      const dayTickets = tickets.filter(t => t.created.split('T')[0] === day.date);
+    const averageAgeTimeSeries = timeSeries.map(period => {
+      const periodTickets = period.tickets || [];
       
       const calculateAvgAge = (category) => {
-        const categoryTickets = dayTickets.filter(t => t.priorityCategory === category);
+        const categoryTickets = periodTickets.filter(t => t.priorityCategory === category);
         if (categoryTickets.length === 0) return 0;
         
         const totalAge = categoryTickets.reduce((sum, ticket) => {
@@ -597,7 +774,7 @@ app.post('/api/jira/historical-data', async (req, res) => {
       };
       
       return {
-        date: day.date,
+        date: period.date,
         highAvgAge: calculateAvgAge('high'),
         mediumAvgAge: calculateAvgAge('medium'),
         lowAvgAge: calculateAvgAge('low')
@@ -613,27 +790,42 @@ app.post('/api/jira/historical-data', async (req, res) => {
       'src-maintenance': '#6b7280',
       'src-enhancement': '#8b5cf6',
       'src-research': '#059669',
-      'src-critical': '#7c2d12'
+      'src-critical': '#7c2d12',
+      'src-golive-critical': '#ff6b00', // Bright orange - very distinct
+      'src-integration': '#0891b2',
+      'src-unknown': '#94a3b8'
     };
+    
+    // Generate a color palette for any additional labels
+    const additionalColors = [
+      '#f97316', '#84cc16', '#06b6d4', '#8b5cf6', '#ec4899', 
+      '#14b8a6', '#f59e0b', '#10b981', '#3b82f6', '#6366f1'
+    ];
+    let colorIndex = 0;
     
     tickets.forEach(ticket => {
       ticket.sourceLabels.forEach(label => {
         if (!sourceLabelsMap[label]) {
           sourceLabelsMap[label] = {
-            name: label.replace('src-', '').replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            name: label.replace('src-', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
             label: label,
             count: 0,
-            color: colors[label] || '#6b7280'
+            color: colors[label] || additionalColors[colorIndex % additionalColors.length]
           };
+          if (!colors[label]) {
+            colorIndex++;
+          }
         }
         sourceLabelsMap[label].count++;
       });
     });
 
-    const sourceLabels = Object.values(sourceLabelsMap).map(source => ({
-      ...source,
-      percentage: tickets.length > 0 ? Math.round((source.count / tickets.length) * 100) : 0
-    }));
+    const sourceLabels = Object.values(sourceLabelsMap)
+      .map(source => ({
+        ...source,
+        percentage: tickets.length > 0 ? Math.round((source.count / tickets.length) * 100) : 0
+      }))
+      .sort((a, b) => b.count - a.count); // Sort by count descending
 
     console.log('Historical analysis complete:', {
       timeSeriesPoints: timeSeries.length,
@@ -647,7 +839,10 @@ app.post('/api/jira/historical-data', async (req, res) => {
       sourceLabelsTimeSeries,
       averageAgeTimeSeries,
       sourceLabels,
+      allSourceLabels: Array.from(allSourceLabels), // List of all source label keys
       totalTickets: tickets.length,
+      timeInterval: timeInterval || 'daily',
+      timePeriod: timePeriod || '30d',
       batchInfo: {
         totalFound: batchResult.total,
         fetchedCount: batchResult.fetchedCount,
