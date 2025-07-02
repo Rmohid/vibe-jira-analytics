@@ -841,23 +841,27 @@ app.post('/api/jira/historical-data', async (req, res) => {
     const sourceLabelsTimeSeries = timeSeries.map(period => {
       const periodTickets = period.tickets || [];
       const sourceCounts = {};
+      const sourceTickets = {};
       
-      // Initialize all labels with 0
+      // Initialize all labels with 0 and empty arrays
       allSourceLabels.forEach(label => {
         sourceCounts[label] = 0;
+        sourceTickets[label] = [];
       });
       
-      // Count actual source labels for this period
+      // Count actual source labels for this period and collect ticket keys
       periodTickets.forEach(ticket => {
         ticket.sourceLabels.forEach(label => {
           sourceCounts[label] = (sourceCounts[label] || 0) + 1;
+          sourceTickets[label].push(ticket.key);
         });
       });
       
-      // Create the result object with all found source labels
+      // Create the result object with all found source labels and their ticket keys
       const result = { date: period.date };
       allSourceLabels.forEach(label => {
         result[label] = sourceCounts[label];
+        result[`${label}_tickets`] = sourceTickets[label];
       });
       
       return result;
