@@ -361,16 +361,16 @@
             },
             labels: {
                 sourceLabels: [
-                    { name: 'Bug Fix', label: 'src-bug-fix', count: 45, percentage: 35, color: '#ff6b00' },
-                    { name: 'Golive Critical', label: 'src-golive-critical', count: 28, percentage: 22, color: '#ef4444' },
+                    { name: 'Bug Fix', label: 'src-bug-fix', count: 45, percentage: 35, color: '#ef4444' },
+                    { name: 'Golive Critical', label: 'src-golive-critical', count: 28, percentage: 22, color: '#dc2626' },
                     { name: 'New Feature', label: 'src-new-feature', count: 18, percentage: 14, color: '#3b82f6' },
-                    { name: 'Integration', label: 'src-integration', count: 12, percentage: 9, color: '#0891b2' },
+                    { name: 'Integration', label: 'src-integration', count: 12, percentage: 9, color: '#8b5cf6' },
                     { name: 'Tech Debt', label: 'src-tech-debt', count: 10, percentage: 8, color: '#f59e0b' },
-                    { name: 'Unknown', label: 'src-unknown', count: 6, percentage: 5, color: '#94a3b8' },
-                    { name: 'Maintenance', label: 'src-maintenance', count: 4, percentage: 3, color: '#6b7280' },
-                    { name: 'Enhancement', label: 'src-enhancement', count: 3, percentage: 2, color: '#8b5cf6' },
-                    { name: 'Research', label: 'src-research', count: 2, percentage: 2, color: '#059669' },
-                    { name: 'Critical', label: 'src-critical', count: 1, percentage: 1, color: '#7c2d12' }
+                    { name: 'Unknown', label: 'src-unknown', count: 6, percentage: 5, color: '#6b7280' },
+                    { name: 'Maintenance', label: 'src-maintenance', count: 4, percentage: 3, color: '#10b981' },
+                    { name: 'Enhancement', label: 'src-enhancement', count: 3, percentage: 2, color: '#ec4899' },
+                    { name: 'Research', label: 'src-research', count: 2, percentage: 2, color: '#06b6d4' },
+                    { name: 'Critical', label: 'src-critical', count: 1, percentage: 1, color: '#84cc16' }
                 ]
             }
         };
@@ -517,35 +517,210 @@
                             </div>
                         )}
                         
-                        {realData.sourceLabelsTimeSeries && (
-                            <div>
-                                <h4 className="font-medium mb-3">Source Label Occurrences (Last 14 Days)</h4>
-                                <ResponsiveContainer width="100%" height={ageConfig.height}>
-                                    <BarChart data={realData.sourceLabelsTimeSeries.slice(-14)}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis 
-                                            dataKey="date" 
-                                            tick={{ fontSize: 10 }}
-                                            angle={-45}
-                                            textAnchor="end"
-                                            height={60}
-                                        />
-                                        <YAxis label={{ value: 'Label Count', angle: -90, position: 'insideLeft' }} />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Legend />
-                                        {realData.sourceLabels?.map((source, index) => (
-                                            <Bar 
-                                                key={source.label} 
-                                                dataKey={source.label} 
-                                                stackId={sourceLabelsConfig.stackId} 
-                                                fill={source.color} 
-                                                name={source.name} 
-                                            />
-                                        ))}
-                                    </BarChart>
-                                </ResponsiveContainer>
+                        {/* Incoming vs Outgoing Rate Analysis */}
+                        <div className="mt-6">
+                            <h4 className="font-medium mb-3">Incoming vs Outgoing Ticket Rate (Last 30 Days)</h4>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <LineChart data={(() => {
+                                    // Calculate incoming vs outgoing rates by date
+                                    const dateMap = {};
+                                    const today = new Date();
+                                    
+                                    // Initialize last 30 days with zero values
+                                    for (let i = 29; i >= 0; i--) {
+                                        const date = new Date(today);
+                                        date.setDate(today.getDate() - i);
+                                        const dateStr = date.toISOString().split('T')[0];
+                                        dateMap[dateStr] = {
+                                            date: dateStr,
+                                            incoming: 0,
+                                            outgoing: 0,
+                                            net: 0
+                                        };
+                                    }
+                                    
+                                    // Count incoming tickets (created)
+                                    if (realData.timeSeries) {
+                                        realData.timeSeries.forEach(dayData => {
+                                            if (dayData.tickets) {
+                                                dayData.tickets.forEach(ticket => {
+                                                    const createdDate = ticket.created ? ticket.created.split('T')[0] : null;
+                                                    if (createdDate && dateMap[createdDate]) {
+                                                        dateMap[createdDate].incoming++;
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    }
+                                    
+                                    // Count outgoing tickets (resolved/closed)
+                                    if (realData.timeSeries) {
+                                        realData.timeSeries.forEach(dayData => {
+                                            if (dayData.tickets) {
+                                                dayData.tickets.forEach(ticket => {
+                                                    if (ticket.statusTransitions) {
+                                                        ticket.statusTransitions.forEach(transition => {
+                                                            if (['Done', 'Closed', 'Resolved', 'Complete', 'Fixed'].includes(transition.toValue)) {
+                                                                const resolvedDate = transition.timestamp ? transition.timestamp.split('T')[0] : null;
+                                                                if (resolvedDate && dateMap[resolvedDate]) {
+                                                                    dateMap[resolvedDate].outgoing++;
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    }
+                                    
+                                    // Calculate net flow and format for chart
+                                    return Object.values(dateMap).map(day => ({
+                                        ...day,
+                                        net: day.incoming - day.outgoing,
+                                        displayDate: new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                                    }));
+                                })()}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis 
+                                        dataKey="displayDate" 
+                                        tick={{ fontSize: 10 }}
+                                        angle={-45}
+                                        textAnchor="end"
+                                        height={60}
+                                    />
+                                    <YAxis label={{ value: 'Tickets', angle: -90, position: 'insideLeft' }} />
+                                    <Tooltip 
+                                        content={({ active, payload, label }) => {
+                                            if (active && payload && payload.length) {
+                                                const data = payload[0].payload;
+                                                return (
+                                                    <div className="bg-white p-3 border border-gray-300 rounded shadow">
+                                                        <p className="font-semibold">{label}</p>
+                                                        <p className="text-green-600">Incoming: {data.incoming}</p>
+                                                        <p className="text-red-600">Outgoing: {data.outgoing}</p>
+                                                        <p className={`font-semibold ${data.net >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                                                            Net: {data.net >= 0 ? '+' : ''}{data.net}
+                                                        </p>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}
+                                    />
+                                    <Legend />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="incoming" 
+                                        stroke="#22c55e" 
+                                        strokeWidth={2}
+                                        name="Incoming (Created)" 
+                                        dot={{ fill: '#22c55e', strokeWidth: 2, r: 3 }}
+                                    />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="outgoing" 
+                                        stroke="#ef4444" 
+                                        strokeWidth={2}
+                                        name="Outgoing (Resolved)" 
+                                        dot={{ fill: '#ef4444', strokeWidth: 2, r: 3 }}
+                                    />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="net" 
+                                        stroke="#3b82f6" 
+                                        strokeWidth={2}
+                                        strokeDasharray="5 5"
+                                        name="Net Flow" 
+                                        dot={{ fill: '#3b82f6', strokeWidth: 2, r: 3 }}
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                            
+                            {/* Summary Statistics */}
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                {(() => {
+                                    const last30Days = (() => {
+                                        let totalIncoming = 0;
+                                        let totalOutgoing = 0;
+                                        const today = new Date();
+                                        const thirtyDaysAgo = new Date(today);
+                                        thirtyDaysAgo.setDate(today.getDate() - 30);
+                                        
+                                        if (realData.timeSeries) {
+                                            realData.timeSeries.forEach(dayData => {
+                                                if (dayData.tickets) {
+                                                    dayData.tickets.forEach(ticket => {
+                                                        // Count incoming
+                                                        const createdDate = ticket.created ? new Date(ticket.created) : null;
+                                                        if (createdDate && createdDate >= thirtyDaysAgo) {
+                                                            totalIncoming++;
+                                                        }
+                                                        
+                                                        // Count outgoing
+                                                        if (ticket.statusTransitions) {
+                                                            ticket.statusTransitions.forEach(transition => {
+                                                                if (['Done', 'Closed', 'Resolved', 'Complete', 'Fixed'].includes(transition.toValue)) {
+                                                                    const resolvedDate = transition.timestamp ? new Date(transition.timestamp) : null;
+                                                                    if (resolvedDate && resolvedDate >= thirtyDaysAgo) {
+                                                                        totalOutgoing++;
+                                                                    }
+                                                                }
+                                                            });
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                        }
+                                        
+                                        return { totalIncoming, totalOutgoing };
+                                    })();
+                                    
+                                    const netFlow = last30Days.totalIncoming - last30Days.totalOutgoing;
+                                    const avgDaily = {
+                                        incoming: (last30Days.totalIncoming / 30).toFixed(1),
+                                        outgoing: (last30Days.totalOutgoing / 30).toFixed(1),
+                                        net: (netFlow / 30).toFixed(1)
+                                    };
+                                    
+                                    return (
+                                        <>
+                                            <div className="bg-green-50 p-3 rounded-lg text-center">
+                                                <div className="text-2xl font-bold text-green-600">{last30Days.totalIncoming}</div>
+                                                <div className="text-sm text-green-700">Total Incoming</div>
+                                                <div className="text-xs text-green-600">{avgDaily.incoming}/day avg</div>
+                                            </div>
+                                            <div className="bg-red-50 p-3 rounded-lg text-center">
+                                                <div className="text-2xl font-bold text-red-600">{last30Days.totalOutgoing}</div>
+                                                <div className="text-sm text-red-700">Total Outgoing</div>
+                                                <div className="text-xs text-red-600">{avgDaily.outgoing}/day avg</div>
+                                            </div>
+                                            <div className={`p-3 rounded-lg text-center ${netFlow >= 0 ? 'bg-blue-50' : 'bg-orange-50'}`}>
+                                                <div className={`text-2xl font-bold ${netFlow >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                                                    {netFlow >= 0 ? '+' : ''}{netFlow}
+                                                </div>
+                                                <div className={`text-sm ${netFlow >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>Net Flow</div>
+                                                <div className={`text-xs ${netFlow >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                                                    {avgDaily.net >= 0 ? '+' : ''}{avgDaily.net}/day avg
+                                                </div>
+                                            </div>
+                                            <div className="bg-gray-50 p-3 rounded-lg text-center">
+                                                <div className="text-2xl font-bold text-gray-600">
+                                                    {last30Days.totalOutgoing > 0 ? ((last30Days.totalIncoming / last30Days.totalOutgoing) * 100).toFixed(0) : '∞'}%
+                                                </div>
+                                                <div className="text-sm text-gray-700">In/Out Ratio</div>
+                                                <div className="text-xs text-gray-600">
+                                                    {last30Days.totalOutgoing > 0 ? 
+                                                        (last30Days.totalIncoming / last30Days.totalOutgoing > 1 ? 'Growing' : 'Shrinking') : 
+                                                        'No outgoing'
+                                                    }
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                             </div>
-                        )}
+                        </div>
+                        
                     </div>
                     
                     <div className="mt-6">
@@ -998,26 +1173,26 @@
                     const extractSourceLabels = (tickets) => {
                         const labelCounts = {};
                         const labelColors = {
-                            'src-bug-fix': '#ff6b00',
+                            'src-bug-fix': '#22c55e',
                             'src-golive-critical': '#ef4444',
                             'src-new-feature': '#3b82f6',
-                            'src-integration': '#0891b2',
+                            'src-integration': '#a855f7',
                             'src-tech-debt': '#f59e0b',
-                            'src-unknown': '#94a3b8',
-                            'src-maintenance': '#6b7280',
-                            'src-enhancement': '#8b5cf6',
-                            'src-research': '#059669',
-                            'src-critical': '#7c2d12',
-                            'src-security': '#991b1b',
-                            'src-performance': '#0e7490',
-                            'src-refactor': '#7c3aed',
-                            'src-documentation': '#0f766e',
-                            'src-testing': '#ca8a04',
-                            'src-deployment': '#1e40af',
-                            'src-config': '#5b21b6',
-                            'src-hotfix': '#b91c1c',
+                            'src-unknown': '#6b7280',
+                            'src-maintenance': '#06b6d4',
+                            'src-enhancement': '#ec4899',
+                            'src-research': '#84cc16',
+                            'src-critical': '#dc2626',
+                            'src-security': '#8b5cf6',
+                            'src-performance': '#14b8a6',
+                            'src-refactor': '#f97316',
+                            'src-documentation': '#10b981',
+                            'src-testing': '#eab308',
+                            'src-deployment': '#1d4ed8',
+                            'src-config': '#7c2d12',
+                            'src-hotfix': '#991b1b',
                             'src-release': '#059669',
-                            'src-migration': '#d97706'
+                            'src-migration': '#c2410c'
                         };
                         
                         // Default color palette for new labels
@@ -1363,23 +1538,6 @@
                                         </span>
                                     </div>
 
-                                    {/* Test Scenario Selector (Demo Mode Only) */}
-                                    {!isProductionMode && (
-                                        <div className="flex items-center space-x-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                                            <span className="text-sm font-medium text-blue-700">Test Scenario:</span>
-                                            <select
-                                                value={currentScenario}
-                                                onChange={(e) => setCurrentScenario(e.target.value)}
-                                                className="text-sm border border-blue-300 rounded px-2 py-1 bg-white"
-                                            >
-                                                {Object.entries(TEST_SCENARIOS).map(([key, scenario]) => (
-                                                    <option key={key} value={key} title={scenario.description}>
-                                                        {scenario.name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    )}
 
                                     {/* Developer Tools */}
                                     <div className="flex items-center space-x-2">
