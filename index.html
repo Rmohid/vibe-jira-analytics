@@ -946,7 +946,16 @@
                             <tbody>
                                 {realData.tickets.slice(0, 10).map((ticket, index) => (
                                     <tr key={index} className="border-b hover:bg-gray-50">
-                                        <td className="py-2 font-medium text-blue-600">{ticket.key}</td>
+                                        <td className="py-2 font-medium">
+                                            <a 
+                                                href={`${jiraConfig.baseUrl}/browse/${ticket.key}`} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 hover:text-blue-800 hover:underline"
+                                            >
+                                                {ticket.key}
+                                            </a>
+                                        </td>
                                         <td className="py-2 max-w-xs truncate" title={ticket.summary}>{ticket.summary}</td>
                                         <td className="py-2">
                                             <div className="flex flex-col">
