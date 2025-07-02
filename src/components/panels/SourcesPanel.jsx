@@ -12,7 +12,7 @@ export const SourcesPanel = ({ realData, timePeriod, customDays }) => {
     return (
         <div className="chart-container p-6">
             <h3 className="text-lg font-semibold mb-4">Source Label Analysis Over Time</h3>
-            <p className="text-sm text-gray-600 mb-4">Charts show the number of source label occurrences per time period. Multiple labels per ticket are counted separately.</p>
+            <p className="text-sm text-gray-600 mb-4">Shows the count of tickets with each source label over time. Multiple labels per ticket are counted separately.</p>
             
             {realData.sourceLabelsTimeSeries && (
                 <div className="mb-6">
@@ -42,6 +42,7 @@ export const SourcesPanel = ({ realData, timePeriod, customDays }) => {
                 {realData.averageAgeTimeSeries && (
                     <div>
                         <h4 className="font-medium mb-3">Average Ticket Age Trends</h4>
+                        <p className="text-xs text-gray-500 mb-2">Shows how the average age of open tickets changes over time by priority level.</p>
                         <ResponsiveContainer width="100%" height={ageConfig.height}>
                             <LineChart data={realData.averageAgeTimeSeries}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -60,6 +61,7 @@ export const SourcesPanel = ({ realData, timePeriod, customDays }) => {
                 {/* Incoming vs Outgoing Rate Analysis */}
                 <div className="mt-6">
                     <h4 className="font-medium mb-3">Incoming vs Outgoing Ticket Rate</h4>
+                    <p className="text-xs text-gray-500 mb-2">Tracks tickets entering (PL assigned) and leaving (PL &gt; 99) the active backlog over time.</p>
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={(() => {
                             // Calculate incoming vs outgoing rates by date for selected time period
@@ -272,6 +274,7 @@ export const SourcesPanel = ({ realData, timePeriod, customDays }) => {
             
             <div className="mt-6">
                 <h4 className="font-medium mb-3">Source Label Summary</h4>
+                <p className="text-xs text-gray-500 mb-3">Current distribution of tickets by source label with percentages.</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
                     {realData.sourceLabels?.map((source, index) => (
                         <div key={index} className="p-3 bg-gray-50 rounded-lg text-center">

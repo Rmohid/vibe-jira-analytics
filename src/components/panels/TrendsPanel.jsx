@@ -19,6 +19,7 @@ export const TrendsPanel = ({ realData, jiraConfig, timePeriod, customDays, time
     return (
         <div className="chart-container p-6">
             <h3 className="text-lg font-semibold mb-4">{title}</h3>
+            <p className="text-sm text-gray-600 mb-4">Shows the count of active tickets over time by priority level (High &lt; 10, Medium &lt; 100, Low ≥ 100).</p>
             <ResponsiveContainer width="100%" height={chartConfig.height}>
                 <LineChart data={realData.historicalTrend}>
                     <CartesianGrid strokeDasharray="3 3" />

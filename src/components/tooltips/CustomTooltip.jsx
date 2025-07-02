@@ -10,7 +10,7 @@ export const CustomTooltip = ({ active, payload, label }) => {
                             className="w-3 h-3 rounded mr-2" 
                             style={{ backgroundColor: entry.color }}
                         ></div>
-                        <span className="text-sm">{entry.name}: {entry.value} labels</span>
+                        <span className="text-sm">{entry.name}: {entry.value} tickets</span>
                     </div>
                 ))}
             </div>
