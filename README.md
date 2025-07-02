@@ -49,13 +49,6 @@ To connect to your Jira instance, you'll need an API token:
 
 ### 3. Run the Application
 
-**Demo Mode** (uses sample data):
-```bash
-npm run demo
-```
-Open http://localhost:3001 and toggle "Demo Mode" ON
-
-**Production Mode** (connects to real Jira):
 ```bash
 npm start
 ```
@@ -254,22 +247,6 @@ case 'CustomPanel':
 
 ## Testing and Debugging
 
-### Using Test Scenarios
-
-The dashboard includes 6 predefined test scenarios accessible via the dropdown in demo mode:
-
-```javascript
-TEST_SCENARIOS = {
-  normal: { /* Typical production data */ },
-  empty: { /* No data state */ },
-  highActivity: { /* Heavy workload */ },
-  lowActivity: { /* Light workload */ },
-  errorState: { /* API failures */ },
-  loadingState: { /* Slow responses */ },
-  edgeCases: { /* Unusual patterns */ }
-}
-```
-
 ### Developer Panel Features
 
 Access via the **🔧 Dev** button:
@@ -291,39 +268,14 @@ Access via the **📋 Logs** button:
 
 When reporting issues:
 
-1. **Reproduce the issue** using test scenarios
-2. **Open Debug Logs** panel to capture relevant information
-3. **Export logs** using the developer panel
-4. **Include scenario details** and steps to reproduce
-
-### Adding Custom Test Scenarios
-
-```javascript
-// Add to TEST_SCENARIOS object
-customScenario: {
-  name: "Custom Test",
-  description: "My specific test case",
-  currentCounts: { high: 2, medium: 5, low: 8, total: 15 },
-  tickets: [
-    {
-      key: 'TEST-1',
-      summary: 'Test ticket summary',
-      status: 'Open',
-      priorityLevel: 50,
-      ageInDays: 10,
-      totalStatusTransitions: 1,
-      totalPriorityLevelTransitions: 0,
-      totalLabelTransitions: 0
-    }
-  ]
-}
-```
+1. **Open Debug Logs** panel to capture relevant information
+2. **Export logs** using the developer panel
+3. **Include error details** and steps to reproduce
 
 ## Support
 
 For issues or questions:
-1. **Use the test scenarios** to isolate the problem
-2. **Check the debug logs panel** for error details
-3. **Export logs** and include them when reporting issues
-4. Verify your Jira API token and permissions (production mode)
-5. Ensure your Jira instance is accessible (production mode)
+1. **Check the debug logs panel** for error details
+2. **Export logs** and include them when reporting issues
+3. Verify your Jira API token and permissions
+4. Ensure your Jira instance is accessible

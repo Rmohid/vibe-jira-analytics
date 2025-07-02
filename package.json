@@ -5,7 +5,6 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "demo": "echo 'Opening demo mode...' && open http://localhost:8080 && python3 -m http.server 8080 2>/dev/null || python -m http.server 8080 2>/dev/null || echo 'Install Python or use: npx serve .'",
     "serve": "npx serve .",
     "dev": "nodemon server.js"
   },

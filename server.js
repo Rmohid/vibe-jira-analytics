@@ -1118,7 +1118,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Jira Analytics server running on http://localhost:${PORT}`);
   console.log(`📊 Open http://localhost:${PORT} to view the dashboard`);
   console.log(`💾 Data persistence: ${DATA_DIR}`);
-  console.log(`💡 Toggle to Demo mode if you don't have Jira API access`);
+  console.log(`💡 Configure your Jira API token to connect to your Jira instance`);
 });
 
 module.exports = app;

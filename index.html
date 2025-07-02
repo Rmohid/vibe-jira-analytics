@@ -165,262 +165,6 @@
             }
         };
         
-        // Test Scenarios for Demo Data
-        const TEST_SCENARIOS = {
-            normal: {
-                name: "Normal Load",
-                description: "Typical production workload with realistic PL transitions",
-                currentCounts: { high: 8, medium: 23, low: 67, total: 98 },
-                tickets: [
-                    { 
-                        key: 'KSD-1001', 
-                        summary: 'Database performance optimization needed', 
-                        status: 'In Progress', 
-                        priorityLevel: 5, 
-                        ageInDays: 3, 
-                        labels: ['src-tech-debt'],
-                        created: '2025-06-29T09:00:00.000-0400',
-                        priorityLevelTransitions: [],
-                        incomingDate: '2025-06-29T09:00:00.000-0400',
-                        outgoingDate: null,
-                        isIncoming: true,
-                        isOutgoing: false
-                    },
-                    { 
-                        key: 'KSD-1002', 
-                        summary: 'User authentication system enhancement', 
-                        status: 'Open', 
-                        priorityLevel: 25, 
-                        ageInDays: 7, 
-                        labels: ['src-enhancement'],
-                        created: '2025-06-25T14:30:00.000-0400',
-                        priorityLevelTransitions: [
-                            {
-                                timestamp: '2025-06-26T10:15:00.000-0400',
-                                author: 'System Admin',
-                                fromValue: null,
-                                toValue: 50
-                            },
-                            {
-                                timestamp: '2025-06-27T16:20:00.000-0400',
-                                author: 'Project Manager',
-                                fromValue: 50,
-                                toValue: 25
-                            }
-                        ],
-                        incomingDate: '2025-06-26T10:15:00.000-0400',
-                        outgoingDate: null,
-                        isIncoming: true,
-                        isOutgoing: false
-                    },
-                    { 
-                        key: 'KSD-1003', 
-                        summary: 'API rate limiting implementation', 
-                        status: 'Code Review', 
-                        priorityLevel: 15, 
-                        ageInDays: 12, 
-                        labels: ['src-new-feature'],
-                        created: '2025-06-20T11:00:00.000-0400',
-                        priorityLevelTransitions: [],
-                        incomingDate: '2025-06-20T11:00:00.000-0400',
-                        outgoingDate: null,
-                        isIncoming: true,
-                        isOutgoing: false
-                    },
-                    { 
-                        key: 'KSD-1004', 
-                        summary: 'Frontend responsive design fixes', 
-                        status: 'Testing', 
-                        priorityLevel: 150, 
-                        ageInDays: 5, 
-                        labels: ['src-bug-fix'],
-                        created: '2025-06-27T08:30:00.000-0400',
-                        priorityLevelTransitions: [],
-                        incomingDate: '2025-06-27T08:30:00.000-0400',
-                        outgoingDate: '2025-06-27T08:30:00.000-0400',
-                        isIncoming: true,
-                        isOutgoing: true
-                    },
-                    { 
-                        key: 'KSD-1005', 
-                        summary: 'Memory leak investigation in production', 
-                        status: 'Blocked', 
-                        priorityLevel: 2, 
-                        ageInDays: 15, 
-                        labels: ['src-bug-fix'],
-                        created: '2025-06-17T13:45:00.000-0400',
-                        priorityLevelTransitions: [
-                            {
-                                timestamp: '2025-06-18T09:00:00.000-0400',
-                                author: 'System Admin',
-                                fromValue: null,
-                                toValue: 50
-                            },
-                            {
-                                timestamp: '2025-06-19T14:30:00.000-0400',
-                                author: 'Tech Lead',
-                                fromValue: 50,
-                                toValue: 2
-                            }
-                        ],
-                        incomingDate: '2025-06-18T09:00:00.000-0400',
-                        outgoingDate: null,
-                        isIncoming: true,
-                        isOutgoing: false
-                    }
-                ]
-            },
-            
-            priorityTransitions: {
-                name: "Priority Transitions",
-                description: "Tickets demonstrating incoming/outgoing behavior with PL changes",
-                currentCounts: { high: 3, medium: 2, low: 3, total: 8 },
-                tickets: [
-                    {
-                        key: 'KSD-2001',
-                        summary: 'Critical security vulnerability - immediate fix needed',
-                        status: 'In Progress',
-                        priorityLevel: 1,
-                        ageInDays: 2,
-                        labels: ['src-bug-fix', 'critical'],
-                        created: '2025-06-30T08:00:00.000-0400',
-                        priorityLevelTransitions: [
-                            {
-                                timestamp: '2025-06-30T08:30:00.000-0400',
-                                author: 'Security Team',
-                                fromValue: null,
-                                toValue: 1
-                            }
-                        ],
-                        incomingDate: '2025-06-30T08:30:00.000-0400',
-                        outgoingDate: null,
-                        isIncoming: true,
-                        isOutgoing: false
-                    },
-                    {
-                        key: 'KSD-2002',
-                        summary: 'Feature request escalated then deprioritized',
-                        status: 'Open',
-                        priorityLevel: 8,
-                        ageInDays: 5,
-                        labels: ['src-new-feature'],
-                        created: '2025-06-27T10:00:00.000-0400',
-                        priorityLevelTransitions: [
-                            {
-                                timestamp: '2025-06-28T09:00:00.000-0400',
-                                author: 'System Admin',
-                                fromValue: null,
-                                toValue: 50
-                            },
-                            {
-                                timestamp: '2025-06-29T14:30:00.000-0400',
-                                author: 'Product Manager',
-                                fromValue: 50,
-                                toValue: 8
-                            }
-                        ],
-                        incomingDate: '2025-06-28T09:00:00.000-0400',
-                        outgoingDate: null,
-                        isIncoming: true,
-                        isOutgoing: false
-                    },
-                    {
-                        key: 'KSD-2003',
-                        summary: 'Documentation update downgraded',
-                        status: 'Waiting',
-                        priorityLevel: 200,
-                        ageInDays: 8,
-                        labels: ['src-tech-debt'],
-                        created: '2025-06-24T15:00:00.000-0400',
-                        priorityLevelTransitions: [
-                            {
-                                timestamp: '2025-06-24T15:30:00.000-0400',
-                                author: 'System Admin',
-                                fromValue: null,
-                                toValue: 50
-                            },
-                            {
-                                timestamp: '2025-06-26T11:00:00.000-0400',
-                                author: 'Team Lead',
-                                fromValue: 50,
-                                toValue: 200
-                            }
-                        ],
-                        incomingDate: '2025-06-24T15:30:00.000-0400',
-                        outgoingDate: '2025-06-26T11:00:00.000-0400',
-                        isIncoming: true,
-                        isOutgoing: true
-                    },
-                    {
-                        key: 'KSD-2004',
-                        summary: 'Bug fix completed and PL cleared',
-                        status: 'Closed',
-                        priorityLevel: null,
-                        ageInDays: 12,
-                        labels: ['src-bug-fix'],
-                        created: '2025-06-20T09:00:00.000-0400',
-                        priorityLevelTransitions: [
-                            {
-                                timestamp: '2025-06-20T09:30:00.000-0400',
-                                author: 'System Admin',
-                                fromValue: null,
-                                toValue: 25
-                            },
-                            {
-                                timestamp: '2025-06-21T10:15:00.000-0400',
-                                author: 'Developer',
-                                fromValue: 25,
-                                toValue: 5
-                            },
-                            {
-                                timestamp: '2025-06-22T16:45:00.000-0400',
-                                author: 'QA Team',
-                                fromValue: 5,
-                                toValue: null
-                            }
-                        ],
-                        incomingDate: '2025-06-20T09:30:00.000-0400',
-                        outgoingDate: '2025-06-22T16:45:00.000-0400',
-                        isIncoming: true,
-                        isOutgoing: true
-                    },
-                    {
-                        key: 'KSD-2005',
-                        summary: 'Task deprioritized to low importance',
-                        status: 'Waiting',
-                        priorityLevel: 150,
-                        ageInDays: 8,
-                        labels: ['src-tech-debt'],
-                        created: '2025-06-24T11:00:00.000-0400',
-                        priorityLevelTransitions: [
-                            {
-                                timestamp: '2025-06-24T11:30:00.000-0400',
-                                author: 'System Admin',
-                                fromValue: null,
-                                toValue: 10
-                            },
-                            {
-                                timestamp: '2025-06-26T14:20:00.000-0400',
-                                author: 'Team Lead',
-                                fromValue: 10,
-                                toValue: 150
-                            }
-                        ],
-                        incomingDate: '2025-06-24T11:30:00.000-0400',
-                        outgoingDate: '2025-06-26T14:20:00.000-0400',
-                        isIncoming: true,
-                        isOutgoing: true
-                    }
-                ]
-            },
-            
-            empty: {
-                name: "Empty State",
-                description: "No tickets or data available",
-                currentCounts: { high: 0, medium: 0, low: 0, total: 0 },
-                tickets: []
-            }
-        };
         
         // Check if Recharts loaded properly, otherwise use fallbacks
         const ChartsAvailable = typeof Recharts !== 'undefined' && Recharts.LineChart;
@@ -1131,11 +875,10 @@
             const [realData, setRealData] = useState(null);
             const [error, setError] = useState(null);
             const [showConfig, setShowConfig] = useState(false);
-            const [isProductionMode, setIsProductionMode] = useState(false);
+            // Always use production mode
+            const isProductionMode = true;
             const [cacheStatus, setCacheStatus] = useState(null);
             
-            // Testing enhancements
-            const [currentScenario, setCurrentScenario] = useState('normal');
             const [showDevPanel, setShowDevPanel] = useState(false);
             const [showLogs, setShowLogs] = useState(false);
             
@@ -1148,7 +891,7 @@
                         userAgent: navigator.userAgent,
                         viewport: { width: window.innerWidth, height: window.innerHeight }
                     });
-                    Logger.state('APP', { isProductionMode, currentScenario }, 'INIT');
+                    Logger.state('APP', { isProductionMode }, 'INIT');
                 } catch (error) {
                     console.error('Error in init useEffect:', error);
                 }
@@ -1163,13 +906,6 @@
                 }
             }, [loading, connectionStatus, error]);
             
-            useEffect(() => {
-                try {
-                    Logger.debug('SCENARIO', `Switched to scenario: ${currentScenario}`, TEST_SCENARIOS[currentScenario]);
-                } catch (error) {
-                    console.error('Error in scenario logging useEffect:', error);
-                }
-            }, [currentScenario]);
 
             // Load saved config from localStorage
             const loadSavedConfig = () => {
@@ -1224,323 +960,9 @@
                 }
             };
 
-            // Demo data simulation with test scenarios
-            const simulateJiraAPI = async (endpoint, data = {}) => {
-                const startTime = performance.now();
-                Logger.debug('API', `Simulating ${endpoint} call`, { endpoint, data, scenario: currentScenario });
-                
-                // Check if we're in a special test scenario
-                const scenario = TEST_SCENARIOS[currentScenario];
-                
-                // Handle error scenarios
-                if (scenario.error) {
-                    Logger.error('API', `Scenario error: ${scenario.error}`);
-                    throw new Error(scenario.error);
-                }
-                
-                // Handle loading scenarios
-                if (scenario.loading) {
-                    Logger.debug('API', 'Simulating long loading state');
-                    await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay
-                }
-                
-                // Simulate network delay based on scenario
-                const baseDelay = currentScenario === 'highActivity' ? 2000 : 
-                                currentScenario === 'lowActivity' ? 500 : 1000;
-                const randomDelay = Math.random() * 1000;
-                await new Promise(resolve => setTimeout(resolve, baseDelay + randomDelay));
-                
-                // Occasional random network errors (except in controlled scenarios)
-                if (!scenario.error && !scenario.loading && Math.random() < 0.02) {
-                    const errorMsg = 'Simulated network timeout - please try again';
-                    Logger.error('API', errorMsg);
-                    throw new Error(errorMsg);
-                }
 
-
-                if (endpoint === 'current-tickets') {
-                    const endTime = performance.now();
-                    Logger.performance('current-tickets API', endTime - startTime);
-                    
-                    // Use scenario data if available
-                    if (scenario.currentCounts && scenario.tickets) {
-                        Logger.debug('API', 'Using scenario data for current-tickets', { 
-                            counts: scenario.currentCounts, 
-                            ticketCount: scenario.tickets.length 
-                        });
-                        return {
-                            counts: scenario.currentCounts,
-                            tickets: scenario.tickets
-                        };
-                    }
-                    
-                    // Fallback to generated data for normal scenario
-                    const generateTickets = (count, priorityCategory, priorityRange) => {
-                        const tickets = [];
-                        const statuses = ['Open', 'In Progress', 'Code Review', 'Testing', 'Blocked'];
-                        const summaries = [
-                            'Database performance optimization needed',
-                            'User authentication system enhancement',
-                            'API rate limiting implementation',
-                            'Frontend responsive design fixes',
-                            'Memory leak investigation in production',
-                            'Integration test automation setup',
-                            'Security vulnerability assessment',
-                            'Third-party library version updates',
-                            'Error handling improvement in checkout',
-                            'Load balancer configuration review'
-                        ];
-
-                        for (let i = 0; i < count; i++) {
-                            const priority = priorityRange[0] + Math.floor(Math.random() * (priorityRange[1] - priorityRange[0]));
-                            const daysAgo = Math.floor(Math.random() * 90);
-                            const createdDate = new Date();
-                            createdDate.setDate(createdDate.getDate() - daysAgo);
-
-                            tickets.push({
-                                key: `KSD-${1000 + Math.floor(Math.random() * 9000)}`,
-                                summary: summaries[Math.floor(Math.random() * summaries.length)],
-                                status: statuses[Math.floor(Math.random() * statuses.length)],
-                                created: createdDate.toISOString(),
-                                priorityLevel: priority,
-                                priorityCategory: priorityCategory,
-                                ageInDays: daysAgo
-                            });
-                        }
-                        return tickets;
-                    };
-
-                    const highTickets = generateTickets(8, 'high', [1, 9]);
-                    const mediumTickets = generateTickets(23, 'medium', [10, 99]);
-                    const lowTickets = generateTickets(67, 'low', [100, 500]);
-                    const allTickets = [...highTickets, ...mediumTickets, ...lowTickets];
-
-                    return {
-                        counts: {
-                            high: highTickets.length,
-                            medium: mediumTickets.length,
-                            low: lowTickets.length,
-                            total: allTickets.length
-                        },
-                        tickets: allTickets.sort((a, b) => new Date(b.created) - new Date(a.created))
-                    };
-                }
-
-                if (endpoint === 'historical-data') {
-                    // Extract source labels dynamically from ticket data
-                    const extractSourceLabels = (tickets) => {
-                        const labelCounts = {};
-                        const labelColors = {
-                            'src-bug-fix': '#22c55e',
-                            'src-golive-critical': '#ef4444',
-                            'src-new-feature': '#3b82f6',
-                            'src-integration': '#a855f7',
-                            'src-tech-debt': '#f59e0b',
-                            'src-unknown': '#6b7280',
-                            'src-maintenance': '#06b6d4',
-                            'src-enhancement': '#ec4899',
-                            'src-research': '#84cc16',
-                            'src-critical': '#dc2626',
-                            'src-security': '#8b5cf6',
-                            'src-performance': '#14b8a6',
-                            'src-refactor': '#f97316',
-                            'src-documentation': '#10b981',
-                            'src-testing': '#eab308',
-                            'src-deployment': '#1d4ed8',
-                            'src-config': '#7c2d12',
-                            'src-hotfix': '#991b1b',
-                            'src-release': '#059669',
-                            'src-migration': '#c2410c'
-                        };
-                        
-                        // Default color palette for new labels
-                        const defaultColors = [
-                            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-                            '#14b8a6', '#f97316', '#06b6d4', '#ec4899', '#84cc16',
-                            '#6366f1', '#a855f7', '#22c55e', '#fb923c', '#0ea5e9'
-                        ];
-                        let colorIndex = 0;
-                        
-                        // Count labels from tickets
-                        tickets.forEach(ticket => {
-                            if (ticket.labels && Array.isArray(ticket.labels)) {
-                                ticket.labels.forEach(label => {
-                                    if (label.startsWith('src-')) {
-                                        labelCounts[label] = (labelCounts[label] || 0) + 1;
-                                    }
-                                });
-                            }
-                        });
-                        
-                        // Convert to array and calculate percentages
-                        const total = Object.values(labelCounts).reduce((sum, count) => sum + count, 0);
-                        const sourceLabels = Object.entries(labelCounts)
-                            .map(([label, count]) => {
-                                let color = labelColors[label];
-                                if (!color) {
-                                    color = defaultColors[colorIndex % defaultColors.length];
-                                    colorIndex++;
-                                }
-                                
-                                const name = label.replace('src-', '')
-                                    .split('-')
-                                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                                    .join(' ');
-                                
-                                return {
-                                    name,
-                                    label,
-                                    count,
-                                    percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-                                    color
-                                };
-                            })
-                            .sort((a, b) => b.count - a.count);
-                        
-                        // If no labels found, use default set
-                        if (sourceLabels.length === 0) {
-                            Logger.debug('LABELS', 'No source labels found in tickets, using defaults');
-                            return DASHBOARD_CONFIG.labels.sourceLabels;
-                        }
-                        
-                        Logger.debug('LABELS', `Extracted ${sourceLabels.length} source labels from ${tickets.length} tickets`, sourceLabels);
-                        return sourceLabels;
-                    };
-                    
-                    // Get tickets for label extraction
-                    let ticketsForLabels = [];
-                    if (scenario.tickets && Array.isArray(scenario.tickets)) {
-                        ticketsForLabels = scenario.tickets;
-                    } else {
-                        // Generate sample tickets with labels for demo
-                        const labels = ['src-bug-fix', 'src-new-feature', 'src-tech-debt', 'src-security', 
-                                      'src-performance', 'src-refactor', 'src-documentation', 'src-testing',
-                                      'src-deployment', 'src-hotfix', 'src-maintenance', 'src-enhancement'];
-                        
-                        ticketsForLabels = Array.from({ length: 50 }, (_, i) => ({
-                            key: `DEMO-${i + 1}`,
-                            labels: [labels[Math.floor(Math.random() * labels.length)], 
-                                    Math.random() > 0.5 ? labels[Math.floor(Math.random() * labels.length)] : null]
-                                    .filter(Boolean)
-                        }));
-                    }
-                    
-                    // Extract labels from tickets
-                    const extractedLabels = extractSourceLabels(ticketsForLabels);
-                    
-                    // Generate time series data based on time period and interval
-                    const generateTimeSeries = () => {
-                        const series = [];
-                        const days = data.timePeriod === 'custom' ? data.customDays : parseInt(data.timePeriod.replace('d', ''));
-                        const interval = data.timeInterval || 'daily';
-                        
-                        let step = 1;
-                        if (interval === 'weekly') step = 7;
-                        if (interval === 'monthly') step = 30;
-                        
-                        for (let i = 0; i <= days; i += step) {
-                            const date = new Date();
-                            date.setDate(date.getDate() - (days - i));
-                            
-                            const baseHigh = Math.max(1, 12 - Math.floor(i / 5) + Math.floor(Math.random() * 4) - 2);
-                            const baseMedium = Math.max(1, 25 - Math.floor(i / 8) + Math.floor(Math.random() * 8) - 4);
-                            const baseLow = Math.max(1, 65 - Math.floor(i / 10) + Math.floor(Math.random() * 12) - 6);
-
-                            series.push({
-                                date: date.toISOString().split('T')[0],
-                                high: baseHigh * (interval === 'weekly' ? 7 : interval === 'monthly' ? 30 : 1),
-                                medium: baseMedium * (interval === 'weekly' ? 7 : interval === 'monthly' ? 30 : 1),
-                                low: baseLow * (interval === 'weekly' ? 7 : interval === 'monthly' ? 30 : 1),
-                                total: (baseHigh + baseMedium + baseLow) * (interval === 'weekly' ? 7 : interval === 'monthly' ? 30 : 1)
-                            });
-                        }
-                        return series;
-                    };
-
-                    // Generate source labels time series
-                    const generateSourceTimeSeries = () => {
-                        const series = [];
-                        const days = data.timePeriod === 'custom' ? data.customDays : parseInt(data.timePeriod.replace('d', ''));
-                        const interval = data.timeInterval || 'daily';
-                        
-                        let step = 1;
-                        if (interval === 'weekly') step = 7;
-                        if (interval === 'monthly') step = 30;
-                        
-                        for (let i = 0; i <= days; i += step) {
-                            const date = new Date();
-                            date.setDate(date.getDate() - (days - i));
-                            
-                            const dayOffset = i / days;
-                            const mult = interval === 'weekly' ? 7 : interval === 'monthly' ? 30 : 1;
-                            
-                            const sourceData = {
-                                date: date.toISOString().split('T')[0]
-                            };
-                            
-                            // Generate data for all extracted labels
-                            extractedLabels.forEach((labelInfo, index) => {
-                                const baseValue = Math.max(1, 10 - index); // Higher count labels get higher base values
-                                const variation = Math.sin((dayOffset + index * 0.1) * Math.PI * 2) * (baseValue / 2);
-                                const randomness = Math.floor(Math.random() * 3);
-                                const count = Math.max(0, Math.floor((baseValue + variation + randomness) * mult));
-                                sourceData[labelInfo.label] = count;
-                                
-                                // Generate realistic ticket keys for this source label and time period
-                                const ticketKeys = [];
-                                for (let j = 0; j < count; j++) {
-                                    // Create unique ticket keys based on date and label index
-                                    const dateHash = sourceData.date.replace(/-/g, '');
-                                    const ticketNumber = 1000 + (index * 100) + (i * 10) + j + 1;
-                                    ticketKeys.push(`KSD-${ticketNumber}`);
-                                }
-                                sourceData[`${labelInfo.label}_tickets`] = ticketKeys;
-                            });
-                            
-                            series.push(sourceData);
-                        }
-                        return series;
-                    };
-
-                    // Generate average age time series
-                    const generateAverageAgeTimeSeries = () => {
-                        const series = [];
-                        const days = data.timePeriod === 'custom' ? data.customDays : parseInt(data.timePeriod.replace('d', ''));
-                        const interval = data.timeInterval || 'daily';
-                        
-                        let step = 1;
-                        if (interval === 'weekly') step = 7;
-                        if (interval === 'monthly') step = 30;
-                        
-                        for (let i = 0; i <= days; i += step) {
-                            const date = new Date();
-                            date.setDate(date.getDate() - (days - i));
-                            
-                            const dayOffset = i / days;
-                            
-                            series.push({
-                                date: date.toISOString().split('T')[0],
-                                highAvgAge: Math.max(5, 15 + Math.floor(dayOffset * 8) + Math.floor(Math.sin(dayOffset * Math.PI * 2) * 5) + Math.floor(Math.random() * 6) - 3),
-                                mediumAvgAge: Math.max(10, 35 + Math.floor(dayOffset * 12) + Math.floor(Math.cos(dayOffset * Math.PI * 1.5) * 8) + Math.floor(Math.random() * 10) - 5),
-                                lowAvgAge: Math.max(20, 55 + Math.floor(dayOffset * 20) + Math.floor(Math.sin(dayOffset * Math.PI * 0.8) * 10) + Math.floor(Math.random() * 15) - 7)
-                            });
-                        }
-                        return series;
-                    };
-
-                    return {
-                        timeSeries: generateTimeSeries(),
-                        sourceLabelsTimeSeries: generateSourceTimeSeries(),
-                        averageAgeTimeSeries: generateAverageAgeTimeSeries(),
-                        sourceLabels: extractedLabels
-                    };
-                }
-
-                throw new Error('Unknown endpoint');
-            };
-
-            // API client selector
-            const jiraAPI = isProductionMode ? productionJiraAPI : simulateJiraAPI;
+            // Always use production API
+            const jiraAPI = productionJiraAPI;
 
             // Helper function to generate JQL query based on time period
             const generateJQL = () => {
@@ -1557,8 +979,8 @@
 
             // Fetch data
             const fetchData = async () => {
-                if (!jiraConfig.apiToken && isProductionMode) {
-                    setError('API Token is required for production mode');
+                if (!jiraConfig.apiToken) {
+                    setError('API Token is required');
                     return;
                 }
 
@@ -1592,24 +1014,12 @@
                 }
             };
 
-            // Auto-fetch in demo mode
-            useEffect(() => {
-                try {
-                    if (!isProductionMode) {
-                        Logger.debug('AUTO-FETCH', 'Auto-fetching demo data');
-                        fetchData();
-                    }
-                } catch (error) {
-                    console.error('Error in auto-fetch useEffect:', error);
-                    Logger.error('AUTO-FETCH', 'Failed to auto-fetch', error);
-                }
-            }, [isProductionMode]); // Removed fetchData dependency to prevent infinite loop
 
             // Auto-refresh when time period or interval changes
             useEffect(() => {
                 try {
-                    // Only refresh if we have data and are in a connected state
-                    if (realData && (connectionStatus === 'connected' || !isProductionMode)) {
+                    // Only refresh if we have data and are connected
+                    if (realData && connectionStatus === 'connected') {
                         Logger.debug('AUTO-REFRESH', 'Auto-refreshing data due to parameter change');
                         fetchData();
                     }
@@ -1636,7 +1046,7 @@
                             return {
                                 color: 'text-green-600',
                                 icon: <CheckIcon />,
-                                text: isProductionMode ? 'Connected to Jira' : 'Demo Mode Active'
+                                text: 'Connected to Jira'
                             };
                         case 'error':
                             return {
@@ -1689,23 +1099,6 @@
                                 </div>
                                 
                                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                                    {/* Mode Toggle */}
-                                    <div className="flex items-center space-x-3 px-4 py-2 bg-gray-100 rounded-lg">
-                                        <span className={`text-sm font-medium ${!isProductionMode ? 'text-blue-600' : 'text-gray-500'}`}>
-                                            Demo
-                                        </span>
-                                        <label className="toggle-switch">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={isProductionMode}
-                                                onChange={(e) => setIsProductionMode(e.target.checked)}
-                                            />
-                                            <span className="slider"></span>
-                                        </label>
-                                        <span className={`text-sm font-medium ${isProductionMode ? 'text-green-600' : 'text-gray-500'}`}>
-                                            Production
-                                        </span>
-                                    </div>
 
 
                                     {/* Developer Tools */}
@@ -1777,7 +1170,7 @@
                                     
                                     <button
                                         onClick={fetchData}
-                                        disabled={loading || (isProductionMode && !jiraConfig.apiToken)}
+                                        disabled={loading || !jiraConfig.apiToken}
                                         className="flex items-center px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
                                     >
                                         <RefreshIcon spinning={loading} />
@@ -1787,27 +1180,12 @@
                             </div>
 
                             {/* Mode Information */}
-                            <div className={`mt-4 p-3 rounded-lg border ${
-                                isProductionMode 
-                                    ? 'bg-green-50 border-green-200' 
-                                    : 'bg-blue-50 border-blue-200'
-                            }`}>
+                            <div className="mt-4 p-3 rounded-lg border bg-green-50 border-green-200">
                                 <div className="flex items-start">
                                     <DatabaseIcon />
-                                    <div className={`ml-3 text-sm ${
-                                        isProductionMode ? 'text-green-800' : 'text-blue-800'
-                                    }`}>
-                                        {isProductionMode ? (
-                                            <>
-                                                <p className="font-medium mb-1">Production Mode - Live Jira Connection</p>
-                                                <p>Connected to real Jira API endpoints. Requires valid API token and backend server running on localhost:3001.</p>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <p className="font-medium mb-1">Demo Mode - Simulated Data</p>
-                                                <p>Using realistic simulated data for demonstration. No real Jira connection required.</p>
-                                            </>
-                                        )}
+                                    <div className="ml-3 text-sm text-green-800">
+                                        <p className="font-medium mb-1">Production Mode - Live Jira Connection</p>
+                                        <p>Connected to real Jira API endpoints. Requires valid API token and backend server running on localhost:3001.</p>
                                     </div>
                                 </div>
                             </div>
@@ -1929,9 +1307,9 @@
                                         </div>
                                     </div>
                                     
-                                    {!jiraConfig.apiToken && isProductionMode && (
+                                    {!jiraConfig.apiToken && (
                                         <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-yellow-700">
-                                            <strong>Production Mode Requires Setup:</strong> Get your API token from{' '}
+                                            <strong>Setup Required:</strong> Get your API token from{' '}
                                             <a href="https://id.atlassian.com/manage-profile/security/api-tokens" 
                                                className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">
                                                 Atlassian Account Settings
@@ -2026,18 +1404,16 @@
                                 <DatabaseIcon />
                                 <h3 className="text-lg font-medium text-gray-900 mb-2">No Data Loaded</h3>
                                 <p className="text-gray-500 mb-6">
-                                    {isProductionMode 
-                                        ? (!jiraConfig.apiToken 
-                                            ? 'Configure your Jira API token and click "Fetch Data" to load live ticket information.'
-                                            : 'Click "Fetch Data" to load your Jira tickets and analytics.')
-                                        : 'Click "Fetch Data" to load demo analytics data, or switch to Production mode for live Jira data.'
+                                    {!jiraConfig.apiToken 
+                                        ? 'Configure your Jira API token and click "Fetch Data" to load live ticket information.'
+                                        : 'Click "Fetch Data" to load your Jira tickets and analytics.'
                                     }
                                 </p>
                                 <button
                                     onClick={fetchData}
                                     className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
                                 >
-                                    {isProductionMode ? 'Load Live Data' : 'Load Demo Data'}
+                                    Load Live Data
                                 </button>
                             </div>
                         )}
@@ -2129,8 +1505,7 @@
                                         <div className="text-xs space-y-1">
                                             <div>React: {React.version}</div>
                                             <div>Charts: {ChartsAvailable ? '✅ Loaded' : '❌ Failed'}</div>
-                                            <div>Scenario: {currentScenario}</div>
-                                            <div>Mode: {isProductionMode ? 'Production' : 'Demo'}</div>
+                                            <div>Mode: Production</div>
                                             <div>Data: {realData ? '✅ Loaded' : '❌ None'}</div>
                                             <div>Error: {error ? '❌ Yes' : '✅ None'}</div>
                                         </div>
