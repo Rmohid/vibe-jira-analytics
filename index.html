@@ -165,18 +165,18 @@
             }
         };
         
-        // Test Scenarios for Enhanced Demo Data
+        // Test Scenarios for Demo Data
         const TEST_SCENARIOS = {
             normal: {
                 name: "Normal Load",
                 description: "Typical production workload",
                 currentCounts: { high: 8, medium: 23, low: 67, total: 98 },
                 tickets: [
-                    { key: 'KSD-1001', summary: 'Database performance optimization needed', status: 'In Progress', priorityLevel: 5, ageInDays: 3, totalStatusTransitions: 2, totalPriorityLevelTransitions: 1, totalLabelTransitions: 0, labels: ['src-performance', 'src-tech-debt'] },
-                    { key: 'KSD-1002', summary: 'User authentication system enhancement', status: 'Open', priorityLevel: 25, ageInDays: 7, totalStatusTransitions: 1, totalPriorityLevelTransitions: 0, totalLabelTransitions: 1, labels: ['src-enhancement', 'src-security'] },
-                    { key: 'KSD-1003', summary: 'API rate limiting implementation', status: 'Code Review', priorityLevel: 15, ageInDays: 12, totalStatusTransitions: 4, totalPriorityLevelTransitions: 2, totalLabelTransitions: 1, labels: ['src-new-feature', 'src-security'] },
-                    { key: 'KSD-1004', summary: 'Frontend responsive design fixes', status: 'Testing', priorityLevel: 150, ageInDays: 5, totalStatusTransitions: 3, totalPriorityLevelTransitions: 0, totalLabelTransitions: 2, labels: ['src-bug-fix'] },
-                    { key: 'KSD-1005', summary: 'Memory leak investigation in production', status: 'Blocked', priorityLevel: 2, ageInDays: 15, totalStatusTransitions: 5, totalPriorityLevelTransitions: 3, totalLabelTransitions: 1, labels: ['src-bug-fix', 'src-critical'] }
+                    { key: 'KSD-1001', summary: 'Database performance optimization needed', status: 'In Progress', priorityLevel: 5, ageInDays: 3, labels: ['src-tech-debt'] },
+                    { key: 'KSD-1002', summary: 'User authentication system enhancement', status: 'Open', priorityLevel: 25, ageInDays: 7, labels: ['src-enhancement'] },
+                    { key: 'KSD-1003', summary: 'API rate limiting implementation', status: 'Code Review', priorityLevel: 15, ageInDays: 12, labels: ['src-new-feature'] },
+                    { key: 'KSD-1004', summary: 'Frontend responsive design fixes', status: 'Testing', priorityLevel: 150, ageInDays: 5, labels: ['src-bug-fix'] },
+                    { key: 'KSD-1005', summary: 'Memory leak investigation in production', status: 'Blocked', priorityLevel: 2, ageInDays: 15, labels: ['src-bug-fix'] }
                 ]
             },
             
@@ -185,57 +185,6 @@
                 description: "No tickets or data available",
                 currentCounts: { high: 0, medium: 0, low: 0, total: 0 },
                 tickets: []
-            },
-            
-            highActivity: {
-                name: "High Activity",
-                description: "Heavy workload with many high-priority items",
-                currentCounts: { high: 45, medium: 75, low: 120, total: 240 },
-                tickets: [
-                    { key: 'KSD-2001', summary: 'Critical production outage - payment system down', status: 'In Progress', priorityLevel: 1, ageInDays: 1, totalStatusTransitions: 8, totalPriorityLevelTransitions: 5, totalLabelTransitions: 3, labels: ['src-critical', 'src-hotfix', 'src-golive-critical'] },
-                    { key: 'KSD-2002', summary: 'Security vulnerability in user login', status: 'In Progress', priorityLevel: 2, ageInDays: 2, totalStatusTransitions: 6, totalPriorityLevelTransitions: 4, totalLabelTransitions: 2, labels: ['src-security', 'src-critical'] },
-                    { key: 'KSD-2003', summary: 'Data corruption in customer database', status: 'Code Review', priorityLevel: 3, ageInDays: 3, totalStatusTransitions: 7, totalPriorityLevelTransitions: 3, totalLabelTransitions: 4, labels: ['src-bug-fix', 'src-critical', 'src-hotfix'] },
-                    { key: 'KSD-2004', summary: 'Performance degradation on main API', status: 'Testing', priorityLevel: 4, ageInDays: 2, totalStatusTransitions: 9, totalPriorityLevelTransitions: 6, totalLabelTransitions: 2, labels: ['src-performance', 'src-critical'] },
-                    { key: 'KSD-2005', summary: 'Mobile app crashing on startup', status: 'Open', priorityLevel: 5, ageInDays: 4, totalStatusTransitions: 3, totalPriorityLevelTransitions: 2, totalLabelTransitions: 5, labels: ['src-bug-fix', 'src-mobile', 'src-critical'] }
-                ]
-            },
-            
-            lowActivity: {
-                name: "Low Activity", 
-                description: "Minimal workload, mostly maintenance",
-                currentCounts: { high: 1, medium: 3, low: 8, total: 12 },
-                tickets: [
-                    { key: 'KSD-3001', summary: 'Update documentation for API endpoints', status: 'Open', priorityLevel: 200, ageInDays: 30, totalStatusTransitions: 0, totalPriorityLevelTransitions: 0, totalLabelTransitions: 0, labels: ['src-documentation'] },
-                    { key: 'KSD-3002', summary: 'Refactor legacy code in user module', status: 'In Progress', priorityLevel: 180, ageInDays: 45, totalStatusTransitions: 1, totalPriorityLevelTransitions: 0, totalLabelTransitions: 1, labels: ['src-refactor', 'src-tech-debt'] },
-                    { key: 'KSD-3003', summary: 'Minor UI improvements for settings page', status: 'Code Review', priorityLevel: 250, ageInDays: 22, totalStatusTransitions: 2, totalPriorityLevelTransitions: 0, totalLabelTransitions: 0, labels: ['src-enhancement'] }
-                ]
-            },
-            
-            errorState: {
-                name: "Error State",
-                description: "Simulates various error conditions",
-                error: "Failed to connect to Jira API - network timeout after 30 seconds",
-                currentCounts: null,
-                tickets: null
-            },
-            
-            loadingState: {
-                name: "Loading State",
-                description: "Simulates slow API responses",
-                loading: true,
-                currentCounts: null,
-                tickets: null
-            },
-            
-            edgeCases: {
-                name: "Edge Cases",
-                description: "Unusual data patterns and edge cases",
-                currentCounts: { high: 999, medium: 0, low: 1, total: 1000 },
-                tickets: [
-                    { key: 'KSD-4001', summary: 'A'.repeat(200), status: 'Open', priorityLevel: 0, ageInDays: 365, totalStatusTransitions: 50, totalPriorityLevelTransitions: 25, totalLabelTransitions: 100, labels: ['src-unknown', 'src-testing', 'src-research', 'src-experimental'] },
-                    { key: 'KSD-4002', summary: '', status: '', priorityLevel: null, ageInDays: 0, totalStatusTransitions: 0, totalPriorityLevelTransitions: 0, totalLabelTransitions: 0, labels: [] },
-                    { key: 'VERY-LONG-PROJECT-KEY-4003', summary: 'Special characters test: àáâãäåæçèéêë 中文 🚀 "quotes" \'apostrophes\' <tags>', status: 'Status with spaces and symbols!@#', priorityLevel: -1, ageInDays: -5, totalStatusTransitions: null, totalPriorityLevelTransitions: undefined, totalLabelTransitions: 'invalid', labels: ['src-testing', 'src-edge-case'] }
-                ]
             }
         };
         
@@ -324,8 +273,7 @@
                 { id: 'overview', title: 'Current Status Cards', component: 'OverviewPanel', enabled: true },
                 { id: 'trends', title: 'Historical Trend Chart', component: 'TrendsPanel', enabled: true },
                 { id: 'sources', title: 'Source Label Analysis', component: 'SourcesPanel', enabled: true },
-                { id: 'tickets', title: 'Recent Tickets Table', component: 'TicketsPanel', enabled: true },
-                { id: 'transitions', title: 'Transition Analysis', component: 'TransitionsPanel', enabled: true }
+                { id: 'tickets', title: 'Recent Tickets Table', component: 'TicketsPanel', enabled: true }
             ],
             charts: {
                 historical: {
@@ -463,7 +411,7 @@
             );
         };
         
-        const SourcesPanel = ({ realData }) => {
+        const SourcesPanel = ({ realData, timePeriod, customDays }) => {
             if (!realData) return null;
             
             const sourceLabelsConfig = DASHBOARD_CONFIG.charts.sourceLabels;
@@ -519,15 +467,18 @@
                         
                         {/* Incoming vs Outgoing Rate Analysis */}
                         <div className="mt-6">
-                            <h4 className="font-medium mb-3">Incoming vs Outgoing Ticket Rate (Last 30 Days)</h4>
+                            <h4 className="font-medium mb-3">Incoming vs Outgoing Ticket Rate</h4>
                             <ResponsiveContainer width="100%" height={300}>
                                 <LineChart data={(() => {
-                                    // Calculate incoming vs outgoing rates by date
+                                    // Calculate incoming vs outgoing rates by date for selected time period
                                     const dateMap = {};
                                     const today = new Date();
                                     
-                                    // Initialize last 30 days with zero values
-                                    for (let i = 29; i >= 0; i--) {
+                                    // Calculate number of days based on time period selection
+                                    const days = timePeriod === 'custom' ? customDays : parseInt(timePeriod.replace('d', ''));
+                                    
+                                    // Initialize selected time period with zero values
+                                    for (let i = days - 1; i >= 0; i--) {
                                         const date = new Date(today);
                                         date.setDate(today.getDate() - i);
                                         const dateStr = date.toISOString().split('T')[0];
@@ -757,7 +708,6 @@
                                     <th className="text-left py-2">Summary</th>
                                     <th className="text-left py-2">Current Status</th>
                                     <th className="text-left py-2">Current PL</th>
-                                    <th className="text-left py-2">Transitions</th>
                                     <th className="text-left py-2">Age (Days)</th>
                                 </tr>
                             </thead>
@@ -796,13 +746,6 @@
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="py-2">
-                                            <div className="text-xs text-gray-600">
-                                                <div>Status: {ticket.totalStatusTransitions || 0}</div>
-                                                <div>PL: {ticket.totalPriorityLevelTransitions || 0}</div>
-                                                <div>Labels: {ticket.totalLabelTransitions || 0}</div>
-                                            </div>
-                                        </td>
                                         <td className="py-2">{ticket.ageInDays}</td>
                                     </tr>
                                 ))}
@@ -813,86 +756,6 @@
             );
         };
         
-        const TransitionsPanel = ({ realData }) => {
-            if (!realData || !realData.tickets) return null;
-            
-            return (
-                <div className="chart-container p-6">
-                    <h3 className="text-lg font-semibold mb-4">Transition Analysis</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-blue-800 mb-2">Status Transitions</h4>
-                            <div className="text-2xl font-bold text-blue-900">
-                                {realData.tickets.reduce((sum, ticket) => sum + (ticket.totalStatusTransitions || 0), 0)}
-                            </div>
-                            <div className="text-sm text-blue-600">
-                                Avg: {(realData.tickets.reduce((sum, ticket) => sum + (ticket.totalStatusTransitions || 0), 0) / realData.tickets.length).toFixed(1)} per ticket
-                            </div>
-                        </div>
-
-                        <div className="bg-yellow-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-yellow-800 mb-2">Priority Level Changes</h4>
-                            <div className="text-2xl font-bold text-yellow-900">
-                                {realData.tickets.reduce((sum, ticket) => sum + (ticket.totalPriorityLevelTransitions || 0), 0)}
-                            </div>
-                            <div className="text-sm text-yellow-600">
-                                Avg: {(realData.tickets.reduce((sum, ticket) => sum + (ticket.totalPriorityLevelTransitions || 0), 0) / realData.tickets.length).toFixed(1)} per ticket
-                            </div>
-                        </div>
-
-                        <div className="bg-green-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-green-800 mb-2">Label Changes</h4>
-                            <div className="text-2xl font-bold text-green-900">
-                                {realData.tickets.reduce((sum, ticket) => sum + (ticket.totalLabelTransitions || 0), 0)}
-                            </div>
-                            <div className="text-sm text-green-600">
-                                Avg: {(realData.tickets.reduce((sum, ticket) => sum + (ticket.totalLabelTransitions || 0), 0) / realData.tickets.length).toFixed(1)} per ticket
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 className="font-medium mb-3">Most Active Tickets (by total transitions)</h4>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b bg-gray-50">
-                                        <th className="text-left py-2 px-2">Ticket</th>
-                                        <th className="text-left py-2 px-2">Status Changes</th>
-                                        <th className="text-left py-2 px-2">PL Changes</th>
-                                        <th className="text-left py-2 px-2">Label Changes</th>
-                                        <th className="text-left py-2 px-2">Total Activity</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {realData.tickets
-                                        .map(ticket => ({
-                                            ...ticket,
-                                            totalActivity: (ticket.totalStatusTransitions || 0) + 
-                                                         (ticket.totalPriorityLevelTransitions || 0) + 
-                                                         (ticket.totalLabelTransitions || 0)
-                                        }))
-                                        .filter(ticket => ticket.totalActivity > 0)
-                                        .sort((a, b) => b.totalActivity - a.totalActivity)
-                                        .slice(0, 5)
-                                        .map((ticket, index) => (
-                                            <tr key={index} className="border-b hover:bg-gray-50">
-                                                <td className="py-2 px-2 font-medium text-blue-600">{ticket.key}</td>
-                                                <td className="py-2 px-2 text-center">{ticket.totalStatusTransitions || 0}</td>
-                                                <td className="py-2 px-2 text-center">{ticket.totalPriorityLevelTransitions || 0}</td>
-                                                <td className="py-2 px-2 text-center">{ticket.totalLabelTransitions || 0}</td>
-                                                <td className="py-2 px-2 text-center font-bold">{ticket.totalActivity}</td>
-                                            </tr>
-                                        ))
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
         
         // Custom Tooltip Components (used by charts)
         const CustomTooltip = ({ active, payload, label }) => {
@@ -951,8 +814,6 @@
                         return <SourcesPanel key={section.id} {...commonProps} />;
                     case 'TicketsPanel':
                         return <TicketsPanel key={section.id} {...commonProps} />;
-                    case 'TransitionsPanel':
-                        return <TransitionsPanel key={section.id} {...commonProps} />;
                     default:
                         return null;
                 }
