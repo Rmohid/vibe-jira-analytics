@@ -43,6 +43,7 @@ The Express server implements several key patterns:
 2. **Data Merging**: When fetching tickets, preserve historical tickets not in current results by merging datasets
 3. **Error Handling**: All API endpoints should fallback to cached data when Jira API is unavailable
 4. **Batch Processing**: Use the existing batched JQL query pattern (100 tickets per request) for large datasets
+5. **Enhanced Data Structure**: `sourceLabelsTimeSeries` includes both counts and ticket keys (`${label}_tickets` arrays) for detailed tooltips
 
 ### Frontend (index.html)
 Single-file React application using CDN libraries with configuration-driven architecture:
@@ -53,7 +54,8 @@ Single-file React application using CDN libraries with configuration-driven arch
 4. **State Management**: Uses React hooks (useState, useEffect) for all state
 5. **Data Fetching**: All API calls go through the `/api` prefix to the Express backend
 6. **Visualization**: Uses Recharts library with chart configurations defined in `DASHBOARD_CONFIG.charts`
-7. **Demo Mode**: Demo data uses configuration-defined source labels and colors
+7. **Interactive Tooltips**: Custom tooltip components that show detailed information with clickable Jira links
+8. **Demo Mode**: Demo data uses configuration-defined source labels and colors
 
 ### API Endpoints
 When adding new endpoints, follow these patterns:
@@ -128,6 +130,21 @@ Logger.state('COMPONENT', newState, 'ACTION_TYPE');
 3. **Changing Visualizations**: Use `DASHBOARD_CONFIG.charts` for consistent styling and configuration
 4. **Error States**: Always provide user-friendly error messages and fallback to cached data
 
+### Tooltip Components
+The application includes specialized tooltip components for enhanced data visualization:
+
+#### SourceLabelsTooltip
+Used in the source labels bar chart to show detailed ticket information:
+- **Purpose**: Displays individual ticket keys for each source label on hover
+- **Features**: Clickable Jira links, count display, color-coded labels
+- **Data Source**: Uses `${label}_tickets` arrays from `sourceLabelsTimeSeries`
+- **Location**: `index.html:1029`
+
+#### CustomTooltip & CustomAgeTooltip
+Generic tooltip components used for other charts:
+- **CustomTooltip**: Standard tooltip showing counts and labels
+- **CustomAgeTooltip**: Specialized for average age charts showing days
+
 ### Configuration Structure
 ```javascript
 DASHBOARD_CONFIG = {
@@ -136,6 +153,16 @@ DASHBOARD_CONFIG = {
   cards: { cardType: { color, icon } },
   labels: { sourceLabels: [{ name, label, color }] }
 }
+
+// Source Labels Time Series includes ticket keys for tooltips
+sourceLabelsTimeSeries = [
+  {
+    date: "2025-04-01",
+    "src-bug-fix": 3,                    // Count of tickets
+    "src-bug-fix_tickets": ["KSD-1", "KSD-2", "KSD-3"],  // Ticket keys
+    // ... other source labels
+  }
+]
 
 TEST_SCENARIOS = {
   scenarioName: {

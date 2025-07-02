@@ -11,6 +11,7 @@ A minimal 3-file local web application that provides analytics and visualization
 - **Time Interval Options**: Aggregate data daily, weekly, or monthly
 - **Priority Analytics**: Visualize tickets by priority levels (High <10, Medium <100, Low ≥100)
 - **Source Label Tracking**: Monitor tickets by source labels (src-bug-fix, src-golive-critical, etc.)
+- **Interactive Tooltips**: Hover over charts to see detailed ticket information with clickable Jira links
 - **Transition History**: Complete tracking of status changes, priority updates, and label modifications
 - **Persistent Credentials**: API tokens saved locally for convenience
 - **Smart Data Caching**: Preserves historical data and merges new information intelligently
@@ -140,8 +141,44 @@ DASHBOARD_CONFIG = {
 - **Frontend**: Single-file React application with modular panel components
 - **DashboardRenderer**: Dynamic component that renders sections based on configuration
 - **Panel Components**: OverviewPanel, TrendsPanel, SourcesPanel, TicketsPanel, TransitionsPanel
+- **Tooltip Components**: Specialized tooltips showing ticket details with clickable Jira links
 - **Charts**: Recharts library with centralized configuration
 - **Styling**: Tailwind CSS for responsive design
+
+## Interactive Features
+
+### Enhanced Tooltips
+
+The dashboard provides rich, interactive tooltips throughout the interface:
+
+#### Source Label Chart Tooltips
+When hovering over bars in the "Source Label Analysis Over Time" chart:
+- **Ticket Count**: Shows the number of tickets for each source label
+- **Individual Tickets**: Lists all ticket keys for that label and time period
+- **Clickable Links**: Each ticket key is a link that opens the Jira issue in a new tab
+- **Color Coding**: Visual indicators matching the chart colors
+
+Example tooltip content:
+```
+Date: 2025-04-28
+
+🟩 Bug Fix: 2 tickets
+Tickets: KSD-11690, KSD-11652
+
+🟥 Golive Critical: 2 tickets  
+Tickets: KSD-11668, KSD-11652
+```
+
+#### Other Chart Tooltips
+- **Priority Trends**: Show counts by priority level
+- **Average Age Charts**: Display age in days with trend information
+- **Standard Tooltips**: Count-based information for overview charts
+
+### Quick Access to Jira
+All ticket references throughout the dashboard are clickable links that:
+- Open the corresponding Jira issue in a new browser tab
+- Use your configured Jira base URL automatically
+- Maintain the same user session (if logged into Jira)
 
 ## Customizing the Dashboard
 
