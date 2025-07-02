@@ -3,76 +3,140 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-Jira Analytics Dashboard - A minimal 3-file local web application that provides analytics and visualizations for Jira tickets. The project uses Express.js backend with a React-based frontend served from a single HTML file.
+Jira Analytics Dashboard - A modular React application that provides analytics and visualizations for Jira tickets. The project uses Express.js backend with a modern React frontend built with Vite.
+
+## Architecture
+
+### Modular Component Structure
+The application follows a clean, modular architecture optimized for Claude Code maintenance:
+
+```
+/src/
+├── components/
+│   ├── panels/               # Dashboard panel components (OverviewPanel, TrendsPanel, etc.)
+│   ├── tooltips/             # Chart tooltip components with specialized functionality
+│   ├── ui/                   # UI utility components (ConfigPanel, DevPanel, etc.)
+│   ├── icons/                # SVG icon components
+│   └── DashboardRenderer.jsx # Dynamic dashboard orchestrator
+├── config/
+│   └── dashboardConfig.js    # Centralized configuration for all dashboard elements
+├── utils/
+│   ├── logger.js             # Enhanced logging system for debugging
+│   ├── api.js                # Production API utilities
+│   └── helpers.js            # Helper functions (config loading, JQL generation)
+├── hooks/
+│   └── useJiraData.js        # Custom hook for data management and API calls
+├── styles/
+│   └── styles.css            # Global CSS styles
+├── App.jsx                   # Main application component
+├── main.jsx                  # React entry point with error boundary
+└── index.html                # HTML template for Vite
+```
+
+### Benefits for Claude Code
+- **Single Responsibility**: Each file has one clear, focused purpose
+- **Semantic Naming**: File names clearly indicate their content and functionality
+- **Logical Grouping**: Related components are organized in meaningful folders
+- **Clear Dependencies**: Import/export statements make relationships obvious
+- **Reduced Complexity**: No more 2000+ line files to understand and navigate
 
 ## Common Development Commands
 
 ### Development
-- `npm run dev` - Run server with auto-restart (nodemon)
-- `npm start` - Run server in production mode
-- `npm run demo` - Run demo mode without connecting to Jira API
+- `npm run dev` - Start both server and client with hot reload (ports 3001 & 3000)
+- `npm run client` - Start only the Vite development server (port 3000)
+- `npm run server` - Start only the Express API server (port 3001)
+- `npm start` - Start server in production mode (port 3001)
+
+### Build & Deploy
+- `npm run build` - Build the React client for production
+- `npm run preview` - Preview the production build locally
 
 ### Testing & Validation
-The dashboard includes comprehensive testing tools:
+The dashboard includes comprehensive debugging tools:
 
-#### Enhanced Demo Data
-- **Test Scenarios**: 6 predefined scenarios (Normal, Empty, High Activity, Low Activity, Error State, Loading State, Edge Cases)
-- **Scenario Selector**: UI dropdown to switch between test scenarios in demo mode
-- **Edge Case Testing**: Includes unusual data patterns, long strings, special characters, null values
+#### Developer Panel (🔧 Dev button)
+- **Quick Actions**: Clear data, trigger test errors, simulate loading states
+- **Data Export**: Export configuration, current data, or debug logs
+- **System Info**: Real-time status of React, charts, data, and error states
 
-#### Debugging Tools
-- **Integrated Logging**: Comprehensive logging system with categories (INIT, API, STATE, PERFORMANCE, ERROR)
-- **Debug Logs Panel**: Real-time log viewer with filtering and export capabilities
-- **Developer Panel**: Quick actions for testing error states, clearing data, triggering loading states
-- **Performance Monitoring**: API call timing and component render performance tracking
+#### Debug Logs Panel (📋 Logs button)
+- **Categorized Logging**: INIT, API, STATE, PERFORMANCE, ERROR categories
+- **Real-time Streaming**: Live log updates as actions occur
+- **Export Capability**: Download logs for Claude debugging
+- **Session Persistence**: Logs stored in browser session storage
 
-#### Manual Testing Process
-1. Use scenario selector to test different data conditions
-2. Monitor debug logs panel for errors or performance issues
-3. Use developer panel to trigger edge cases
-4. Export logs for Claude debugging when issues arise
-5. Verify data persistence by checking files in `/data` directory
-6. Test both demo mode and production mode
+## Working with Components
 
-## Architecture & Code Patterns
+### Adding New Panel Components
 
-### Backend (server.js)
-The Express server implements several key patterns:
+1. **Create the component**:
+```jsx
+// src/components/panels/NewPanel.jsx
+import React from 'react'
 
-1. **Smart Data Caching**: Always check existing data timestamps before saving new data to avoid overwriting newer information
-2. **Data Merging**: When fetching tickets, preserve historical tickets not in current results by merging datasets
-3. **Error Handling**: All API endpoints should fallback to cached data when Jira API is unavailable
-4. **Batch Processing**: Use the existing batched JQL query pattern (100 tickets per request) for large datasets
-5. **Enhanced Data Structure**: `sourceLabelsTimeSeries` includes both counts and ticket keys (`${label}_tickets` arrays) for detailed tooltips
+export const NewPanel = ({ realData, jiraConfig, timePeriod }) => {
+    if (!realData) return null
+    
+    return (
+        <div className="chart-container p-6">
+            <h3 className="text-lg font-semibold mb-4">New Panel Title</h3>
+            {/* Panel content */}
+        </div>
+    )
+}
+```
 
-### Frontend (index.html)
-Single-file React application using CDN libraries with configuration-driven architecture:
+2. **Register in DashboardRenderer**:
+```jsx
+// src/components/DashboardRenderer.jsx
+import { NewPanel } from './panels/NewPanel'
 
-1. **Configuration-Driven Dashboard**: Uses `DASHBOARD_CONFIG` object to define all dashboard sections, charts, and components
-2. **Component Architecture**: Modular panel components (OverviewPanel, TrendsPanel, SourcesPanel, TicketsPanel, TransitionsPanel)
-3. **Dynamic Rendering**: `DashboardRenderer` component dynamically renders sections based on configuration
-4. **State Management**: Uses React hooks (useState, useEffect) for all state
-5. **Data Fetching**: All API calls go through the `/api` prefix to the Express backend
-6. **Visualization**: Uses Recharts library with chart configurations defined in `DASHBOARD_CONFIG.charts`
-7. **Interactive Tooltips**: Custom tooltip components that show detailed information with clickable Jira links
-8. **Demo Mode**: Demo data uses configuration-defined source labels and colors
+case 'NewPanel':
+    return <NewPanel key={section.id} {...commonProps} />
+```
 
-### API Endpoints
-When adding new endpoints, follow these patterns:
-- POST endpoints for Jira operations that require credentials
-- GET endpoints for cached data retrieval
-- Always return appropriate error messages and status codes
-- Save configuration changes using the `saveConfig` helper
+3. **Add to configuration**:
+```jsx
+// src/config/dashboardConfig.js
+{ id: 'newpanel', title: 'New Panel', component: 'NewPanel', enabled: true }
+```
 
-### Data Persistence
-- All data stored in JSON files under `/data` directory
-- Use `loadSavedData` and `saveDataSmart` helpers for file operations
-- Never expose full API tokens in responses or logs
+### Modifying Existing Components
 
-## Important Configuration
+When editing components, follow these patterns:
 
-### Jira Integration
-- Base URL: `https://komutel.atlassian.net` (configurable)
+#### Panel Components (`src/components/panels/`)
+- Always check `if (!realData) return null` at the start
+- Use consistent class names: `chart-container p-6` for containers
+- Import required utilities from `../icons/Icons` or `../tooltips/`
+- Use `DASHBOARD_CONFIG` for styling and configuration
+
+#### UI Components (`src/components/ui/`)
+- Follow conditional rendering patterns: `if (!showComponent) return null`
+- Use semantic prop names that clearly indicate purpose
+- Implement proper event handlers and state management
+
+#### Tooltip Components (`src/components/tooltips/`)
+- Always check `if (active && payload && payload.length)` for chart tooltips
+- Use consistent styling: `bg-white p-3 border border-gray-300 rounded-lg shadow-lg`
+- Include proper accessibility and interaction patterns
+
+## Configuration Management
+
+### Dashboard Configuration (`src/config/dashboardConfig.js`)
+Central configuration for all dashboard elements:
+```javascript
+export const DASHBOARD_CONFIG = {
+    sections: [/* Dashboard sections with enabled/disabled flags */],
+    charts: {/* Chart configurations with colors and dimensions */},
+    cards: {/* Card styling and icon mappings */},
+    labels: {/* Source label definitions and colors */}
+}
+```
+
+### Jira Integration Settings
+- Base URL: Configurable Jira instance URL
 - API Version: REST API v3
 - Custom Fields: `customfield_11129` for Priority Level
 - Authentication: Basic auth with email + API token
@@ -86,105 +150,98 @@ When adding new endpoints, follow these patterns:
 ### Source Labels
 Only labels prefixed with "src-" are considered source labels for analytics.
 
-## Working with This Codebase
+## Data Management
 
-### Dashboard Content Management
-The dashboard uses a configuration-driven approach for easy content modification:
-
-1. **Adding/Removing Sections**: Modify `DASHBOARD_CONFIG.sections` array to enable/disable dashboard panels
-2. **Changing Chart Colors**: Update colors in `DASHBOARD_CONFIG.charts` for consistent theming
-3. **Modifying Source Labels**: Edit `DASHBOARD_CONFIG.labels.sourceLabels` for label definitions
-4. **Creating New Panels**: Add new panel components and register them in `DashboardRenderer`
-
-### Testing and Debugging
-
-#### Using Test Scenarios
+### Custom Hook Pattern (`src/hooks/useJiraData.js`)
+The application uses a custom hook for data management:
 ```javascript
-// Add new test scenario
-TEST_SCENARIOS.myScenario = {
-    name: "My Test Case",
-    description: "Testing specific conditions",
-    currentCounts: { high: 5, medium: 10, low: 15, total: 30 },
-    tickets: [...]
-};
+const {
+    loading, connectionStatus, lastSync, realData, error,
+    fetchData, setRealData, setError, setLoading
+} = useJiraData(jiraConfig, timePeriod, timeInterval, customDays)
 ```
 
-#### Logging for Claude Debugging
+### API Integration (`src/utils/api.js`)
+- All API calls go through `productionJiraAPI` function
+- Endpoints use `/api/jira/` prefix to Express backend
+- Error handling includes fallback to cached data
+- Smart data caching preserves historical information
+
+### Logging System (`src/utils/logger.js`)
+Structured logging for debugging:
 ```javascript
-// Use structured logging
-Logger.debug('COMPONENT', 'Component action', { data: relevantData });
-Logger.error('API', 'Failed to fetch', errorObject);
-Logger.performance('render', durationMs, { componentName });
-Logger.state('COMPONENT', newState, 'ACTION_TYPE');
+Logger.debug('COMPONENT', 'Action description', { data })
+Logger.error('API', 'Error description', errorObject)
+Logger.performance('operation', durationMs, metadata)
+Logger.state('COMPONENT', newState, 'ACTION_TYPE')
 ```
 
-#### Developer Tools Usage
-1. **Toggle Dev Panel**: Click "🔧 Dev" button to access quick testing actions
-2. **View Logs**: Click "📋 Logs" button to see real-time debug information
-3. **Export Data**: Use dev panel to export configuration, data, or logs for analysis
-4. **Test Error States**: Use dev panel buttons to simulate various error conditions
+## Chart Integration
 
-### Development Workflow
-1. **Adding New Features**: Implement in both demo mode (hardcoded data) and production mode (API calls)
-2. **Modifying API**: Update both server.js endpoint and corresponding frontend fetch call
-3. **Changing Visualizations**: Use `DASHBOARD_CONFIG.charts` for consistent styling and configuration
-4. **Error States**: Always provide user-friendly error messages and fallback to cached data
+### Recharts Integration
+- Charts loaded globally via CDN for compatibility
+- Chart availability checked with `checkChartsAvailable()` helper
+- Fallback components provided when charts unavailable
+- Tooltip components specialized for different chart types
 
-### Tooltip Components
-The application includes specialized tooltip components for enhanced data visualization:
+### Chart Configuration
+- Colors and dimensions defined in `DASHBOARD_CONFIG.charts`
+- Consistent styling across all chart components
+- Responsive containers for proper sizing
 
-#### SourceLabelsTooltip
-Used in the source labels bar chart to show detailed ticket information:
-- **Purpose**: Displays individual ticket keys for each source label on hover
-- **Features**: Clickable Jira links, count display, color-coded labels
-- **Data Source**: Uses `${label}_tickets` arrays from `sourceLabelsTimeSeries`
-- **Location**: `index.html:1029`
+## Development Workflow for Claude Code
 
-#### CustomTooltip & CustomAgeTooltip
-Generic tooltip components used for other charts:
-- **CustomTooltip**: Standard tooltip showing counts and labels
-- **CustomAgeTooltip**: Specialized for average age charts showing days
+### When Adding Features
+1. **Identify the appropriate component category** (panel, ui, tooltip, etc.)
+2. **Create focused, single-purpose components**
+3. **Use existing patterns and utilities**
+4. **Update configuration if needed**
+5. **Test with developer tools**
 
-### Configuration Structure
-```javascript
-DASHBOARD_CONFIG = {
-  sections: [{ id, title, component, enabled }],
-  charts: { chartType: { type, height, colors } },
-  cards: { cardType: { color, icon } },
-  labels: { sourceLabels: [{ name, label, color }] }
-}
+### When Debugging
+1. **Use the Debug Logs panel** to understand application state
+2. **Export logs** for analysis when issues occur
+3. **Check component-specific files** rather than large monoliths
+4. **Use developer panel quick actions** to test edge cases
 
-// Source Labels Time Series includes ticket keys for tooltips
-sourceLabelsTimeSeries = [
-  {
-    date: "2025-04-01",
-    "src-bug-fix": 3,                    // Count of tickets
-    "src-bug-fix_tickets": ["KSD-1", "KSD-2", "KSD-3"],  // Ticket keys
-    // ... other source labels
-  }
-]
+### When Modifying Existing Code
+1. **Focus on specific component files** based on the feature area
+2. **Understand component dependencies** through import statements
+3. **Test changes using built-in developer tools**
+4. **Use the logging system** to track state changes
 
-TEST_SCENARIOS = {
-  scenarioName: {
-    name: "Display Name",
-    description: "Scenario description",
-    currentCounts: { high, medium, low, total },
-    tickets: [{ key, summary, status, priorityLevel, ageInDays, ... }],
-    error: "Error message" (optional),
-    loading: true (optional)
-  }
-}
+## Important Patterns
 
-Logger = {
-  debug(category, message, data),
-  error(category, message, error),
-  performance(operation, duration, metadata),
-  state(component, state, action),
-  getLogs(), clearLogs(), exportLogs()
-}
-```
+### Error Boundaries
+- Main error boundary in `src/main.jsx`
+- Graceful error handling with reload options
+- Integration with logging system
+
+### State Management
+- React hooks for local component state
+- Custom `useJiraData` hook for data management
+- LocalStorage for configuration persistence
+
+### Styling
+- Tailwind CSS classes for consistency
+- Custom CSS in `src/styles/styles.css` for specialized styling
+- Chart-specific styling in configuration
 
 ## Security Considerations
-- API tokens stored locally in `data/config.json` - never commit this file
-- Frontend masks tokens in UI display
-- No tokens in server logs or error messages
+- API tokens stored locally only in `/data/config.json`
+- Tokens masked in UI display
+- No credentials in logs or server responses
+- All data remains on local machine
+
+## Performance Optimization
+- Vite for fast development builds
+- Component code splitting
+- Efficient re-rendering through proper dependency arrays
+- Smart data caching to avoid unnecessary API calls
+
+This modular architecture makes it significantly easier for Claude Code to:
+- Understand specific functionality quickly
+- Make targeted changes without side effects
+- Add new features in the correct location
+- Maintain consistent code patterns
+- Debug issues effectively through focused components

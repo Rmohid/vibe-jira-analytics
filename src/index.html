@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jira Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Prevent extension context errors */
+        [data-lastpass-icon-root], 
+        [data-lastpass-root], 
+        [id^="__BITWARDEN"], 
+        [data-bitwarden], 
+        div[style*="z-index: 2147483647"] {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Prevent extension context errors -->
+    <script>
+        // Suppress extension-related errors
+        window.addEventListener('error', function(e) {
+            if (e.message && (
+                e.message.includes('Extension context invalidated') ||
+                e.message.includes('autofill') ||
+                e.message.includes('lastpass') ||
+                e.message.includes('bitwarden')
+            )) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        });
+    </script>
+    
+    <div id="root">
+        <div style="padding: 20px; text-align: center; font-family: Arial;">
+            <h2>Loading Dashboard...</h2>
+            <p>If this message persists, there may be a JavaScript loading issue.</p>
+        </div>
+    </div>
+    <script>
+        console.log('🔍 HTML Debug: Script is executing')
+        console.log('🔍 HTML Debug: Root element exists:', !!document.getElementById('root'))
+    </script>
+    <script type="module" src="/main.jsx"></script>
+</body>
+</html>

@@ -5,6 +5,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const fs = require('fs').promises;
+const fssync = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,7 +14,10 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files (the HTML app)
-app.use(express.static('.'));
+// In production, serve built files from dist/, otherwise serve from root for development compatibility
+const staticPath = fssync.existsSync(path.join(__dirname, 'dist')) ? 'dist' : '.';
+app.use(express.static(staticPath));
+console.log(`📂 Serving static files from: ${staticPath}`);
 
 // Data persistence paths
 const DATA_DIR = path.join(__dirname, 'data');

@@ -1,11 +1,12 @@
 # Jira Analytics Dashboard
 
-A minimal 3-file local web application that provides analytics and visualizations for Jira tickets. Built with Express.js backend and React frontend served from a single HTML file.
+A modular React application that provides analytics and visualizations for Jira tickets. Built with Express.js backend and modern React frontend with Vite build system.
 
 ## Features
 
-- **Configuration-Driven Dashboard**: Easy content modification through JavaScript configuration objects
-- **Modular Components**: Reusable panel components for different types of analysis
+- **Modular Component Architecture**: Clean separation of concerns with single-responsibility components
+- **Modern React Build System**: Vite for fast development and optimized production builds
+- **Configuration-Driven Dashboard**: Easy content modification through centralized configuration
 - **Dynamic Rendering**: Sections can be enabled/disabled without code changes
 - **Time Period Controls**: View data for 7d, 30d, 90d, 180d, 365d, or custom periods
 - **Time Interval Options**: Aggregate data daily, weekly, or monthly
@@ -15,7 +16,7 @@ A minimal 3-file local web application that provides analytics and visualization
 - **Transition History**: Complete tracking of status changes, priority updates, and label modifications
 - **Persistent Credentials**: API tokens saved locally for convenience
 - **Smart Data Caching**: Preserves historical data and merges new information intelligently
-- **Centralized Styling**: Consistent colors and chart configurations
+- **Developer Tools**: Built-in logging, debugging, and data export capabilities
 
 ## Quick Start
 
@@ -49,22 +50,100 @@ To connect to your Jira instance, you'll need an API token:
 
 ### 3. Run the Application
 
+**Development Mode** (recommended - with hot reload):
 ```bash
+npm run dev
+```
+This starts both the API server (port 3001) and the React client (port 3000) with hot reload.
+
+**Production Mode**:
+```bash
+# First, build the client (required)
+npm run build
+
+# Then start the server (serves built files from dist/)
 npm start
 ```
-Open http://localhost:3001 and:
+Builds the optimized client bundle and starts the API server on port 3001. **Note**: The build step is required for production mode to work correctly.
+
+**Individual Services**:
+```bash
+# API server only
+npm run server
+
+# React client only (development)
+npm run client
+
+# Preview built files (alternative to npm start)
+npm run preview
+```
+
+### 4. Access the Dashboard
+
+**Development**: Open http://localhost:3000  
+**Production**: Open http://localhost:3001
+
+Then:
 1. Enter your Jira base URL
 2. Enter your email address
 3. Enter your API token
 4. Select your project key
-5. Click "Fetch Tickets"
+5. Click "Fetch Data"
 
-### 4. Development Mode
+## Architecture
 
-For development with auto-restart:
-```bash
-npm run dev
+### Modular Component Structure
+
 ```
+/src/
+├── components/
+│   ├── panels/               # Dashboard panel components
+│   │   ├── OverviewPanel.jsx
+│   │   ├── TrendsPanel.jsx
+│   │   ├── SourcesPanel.jsx
+│   │   └── TicketsPanel.jsx
+│   ├── tooltips/             # Chart tooltip components
+│   │   ├── CustomTooltip.jsx
+│   │   ├── SourceLabelsTooltip.jsx
+│   │   └── CustomAgeTooltip.jsx
+│   ├── ui/                   # UI utility components
+│   │   ├── ConnectionStatus.jsx
+│   │   ├── ConfigPanel.jsx
+│   │   ├── DevPanel.jsx
+│   │   └── LogsPanel.jsx
+│   ├── icons/                # SVG icon components
+│   │   └── Icons.jsx
+│   └── DashboardRenderer.jsx # Dynamic dashboard orchestrator
+├── config/
+│   └── dashboardConfig.js    # Centralized configuration
+├── utils/
+│   ├── logger.js             # Enhanced logging system
+│   ├── api.js                # API utilities
+│   └── helpers.js            # Helper functions
+├── hooks/
+│   └── useJiraData.js        # Data management custom hook
+├── styles/
+│   └── styles.css            # Global styles
+├── App.jsx                   # Main application component
+├── main.jsx                  # React entry point
+└── index.html                # HTML template
+```
+
+### Benefits for Maintainability
+
+- **Single Responsibility**: Each component has one clear purpose
+- **Semantic Naming**: File names clearly indicate their content
+- **Logical Grouping**: Related components organized in folders
+- **Clear Dependencies**: Import/export statements show relationships
+- **Easy Claude Code Updates**: Small, focused files are easier to understand and modify
+
+### Build System
+
+- **Vite**: Fast development server with hot module replacement
+- **React 18**: Modern React with concurrent features
+- **Recharts**: Chart library loaded globally for compatibility
+- **Tailwind CSS**: Utility-first CSS framework via CDN
+- **ESM Modules**: Modern JavaScript module system
 
 ## Configuration
 
@@ -86,6 +165,82 @@ All data is stored locally in the `/data` directory:
 - `tickets.json` - Current ticket data with full transition history
 - `historical.json` - Time series data for charts
 
+## Development
+
+### Adding New Components
+
+1. **Create the component** in the appropriate directory:
+   ```jsx
+   // src/components/panels/NewPanel.jsx
+   import React from 'react'
+   
+   export const NewPanel = ({ realData, jiraConfig }) => {
+     if (!realData) return null
+     return (
+       <div className="chart-container p-6">
+         <h3 className="text-lg font-semibold mb-4">New Panel</h3>
+         {/* Your content */}
+       </div>
+     )
+   }
+   ```
+
+2. **Register in DashboardRenderer**:
+   ```jsx
+   // src/components/DashboardRenderer.jsx
+   import { NewPanel } from './panels/NewPanel'
+   
+   case 'NewPanel':
+     return <NewPanel key={section.id} {...commonProps} />
+   ```
+
+3. **Add to configuration**:
+   ```jsx
+   // src/config/dashboardConfig.js
+   { id: 'new', title: 'New Panel', component: 'NewPanel', enabled: true }
+   ```
+
+### Modifying Configuration
+
+Edit `src/config/dashboardConfig.js` to:
+- Enable/disable dashboard sections
+- Change chart colors and dimensions
+- Modify source label definitions
+- Update card configurations
+
+### Development Workflow
+
+1. **Start development server**: `npm run dev`
+2. **Make changes** to components in `/src`
+3. **Hot reload** automatically updates the browser
+4. **Use developer tools** (🔧 Dev button) for debugging
+5. **Check logs panel** (📋 Logs button) for errors
+6. **Export data/logs** for troubleshooting
+
+## Testing and Debugging
+
+### Developer Panel Features
+
+Access via the **🔧 Dev** button:
+- **Quick Actions**: Clear data, trigger errors, test loading states
+- **Data Export**: Download configuration, current data, or debug logs
+- **System Info**: Real-time status of React, charts, data, and errors
+
+### Debug Logging
+
+Access via the **📋 Logs** button:
+- **Categorized Logs**: INIT, API, STATE, PERFORMANCE, ERROR
+- **Real-time Streaming**: Live updates as actions occur
+- **Export Capability**: Download logs for analysis
+- **Session Persistence**: Logs stored in browser session
+
+### For Claude Debugging
+
+When reporting issues:
+1. **Open Debug Logs** panel to capture relevant information
+2. **Export logs** using the developer panel
+3. **Include error details** and steps to reproduce
+
 ## Troubleshooting
 
 ### Common Issues
@@ -94,7 +249,8 @@ All data is stored locally in the `/data` directory:
 ```bash
 # Kill existing server
 lsof -ti:3001 | xargs kill -9
-npm start
+lsof -ti:3000 | xargs kill -9
+npm run dev
 ```
 
 **"401 Unauthorized"**
@@ -107,6 +263,16 @@ npm start
 - Check that tickets have the Priority Level custom field set
 - Try adjusting the time period (some projects may have older tickets)
 
+**"Charts not loading"**
+- Check browser console for JavaScript errors
+- Ensure Recharts library loaded correctly
+- Try refreshing the page
+
+**"npm start shows blank page"**
+- Make sure you ran `npm run build` first to create the dist/ folder
+- Check that the server console shows "Serving static files from: dist"
+- For development, use `npm run dev` instead
+
 ### API Token Permissions
 
 Your API token needs:
@@ -114,128 +280,18 @@ Your API token needs:
 - Permission to view issue details and history
 - Access to custom fields (specifically Priority Level field)
 
-## Architecture
+### Build Issues
 
-### Configuration-Driven Dashboard
-
-The dashboard now uses a configuration-driven approach for easy content management:
-
-```javascript
-DASHBOARD_CONFIG = {
-  sections: [{ id, title, component, enabled }],
-  charts: { chartType: { type, height, colors } },
-  cards: { cardType: { color, icon } },
-  labels: { sourceLabels: [{ name, label, color }] }
-}
+**Dependencies not installing**:
+```bash
+rm -rf node_modules package-lock.json
+npm install
 ```
 
-### Components
-- **Backend**: Express.js server with Jira REST API v3 integration
-- **Frontend**: Single-file React application with modular panel components
-- **DashboardRenderer**: Dynamic component that renders sections based on configuration
-- **Panel Components**: OverviewPanel, TrendsPanel, SourcesPanel, TicketsPanel, TransitionsPanel
-- **Tooltip Components**: Specialized tooltips showing ticket details with clickable Jira links
-- **Charts**: Recharts library with centralized configuration
-- **Styling**: Tailwind CSS for responsive design
-
-## Interactive Features
-
-### Enhanced Tooltips
-
-The dashboard provides rich, interactive tooltips throughout the interface:
-
-#### Source Label Chart Tooltips
-When hovering over bars in the "Source Label Analysis Over Time" chart:
-- **Ticket Count**: Shows the number of tickets for each source label
-- **Individual Tickets**: Lists all ticket keys for that label and time period
-- **Clickable Links**: Each ticket key is a link that opens the Jira issue in a new tab
-- **Color Coding**: Visual indicators matching the chart colors
-
-Example tooltip content:
-```
-Date: 2025-04-28
-
-🟩 Bug Fix: 2 tickets
-Tickets: KSD-11690, KSD-11652
-
-🟥 Golive Critical: 2 tickets  
-Tickets: KSD-11668, KSD-11652
-```
-
-#### Other Chart Tooltips
-- **Priority Trends**: Show counts by priority level
-- **Average Age Charts**: Display age in days with trend information
-- **Standard Tooltips**: Count-based information for overview charts
-
-### Quick Access to Jira
-All ticket references throughout the dashboard are clickable links that:
-- Open the corresponding Jira issue in a new browser tab
-- Use your configured Jira base URL automatically
-- Maintain the same user session (if logged into Jira)
-
-## Customizing the Dashboard
-
-### Adding/Removing Sections
-
-Edit `DASHBOARD_CONFIG.sections` in `index.html`:
-```javascript
-// Disable a section
-{ id: 'transitions', component: 'TransitionsPanel', enabled: false }
-
-// Enable a section
-{ id: 'overview', component: 'OverviewPanel', enabled: true }
-```
-
-### Changing Chart Colors
-
-Update `DASHBOARD_CONFIG.charts`:
-```javascript
-charts: {
-  historical: {
-    colors: {
-      high: '#ff0000',    // Change to red
-      medium: '#ffaa00',  // Change to orange
-      low: '#0088ff'      // Change to blue
-    }
-  }
-}
-```
-
-### Modifying Source Labels
-
-Edit `DASHBOARD_CONFIG.labels.sourceLabels`:
-```javascript
-sourceLabels: [
-  { name: 'Bug Fix', label: 'src-bug-fix', color: '#ef4444' },
-  { name: 'Feature', label: 'src-feature', color: '#3b82f6' },
-  // Add, remove, or modify labels as needed
-]
-```
-
-### Creating Custom Panels
-
-1. **Create the component** in `index.html`:
-```javascript
-const CustomPanel = ({ realData, jiraConfig }) => {
-  if (!realData) return null;
-  return (
-    <div className="chart-container p-6">
-      <h3 className="text-lg font-semibold mb-4">Custom Analysis</h3>
-      {/* Your custom content */}
-    </div>
-  );
-};
-```
-
-2. **Register in DashboardRenderer**:
-```javascript
-case 'CustomPanel':
-  return <CustomPanel key={section.id} {...commonProps} />;
-```
-
-3. **Add to configuration**:
-```javascript
-{ id: 'custom', title: 'Custom Analysis', component: 'CustomPanel', enabled: true }
+**Vite build failing**:
+```bash
+npm run build
+# Check console output for specific errors
 ```
 
 ## Security
@@ -244,33 +300,6 @@ case 'CustomPanel':
 - Tokens are masked in the UI
 - No credentials are logged or transmitted to external services
 - All data remains on your local machine
-
-## Testing and Debugging
-
-### Developer Panel Features
-
-Access via the **🔧 Dev** button:
-
-- **Quick Actions**: Clear data, trigger errors, test loading states
-- **Data Export**: Download configuration, current data, or debug logs
-- **System Info**: Real-time status of React, charts, data, and errors
-
-### Debug Logging
-
-Access via the **📋 Logs** button:
-
-- **Categorized Logs**: INIT, API, STATE, PERFORMANCE, ERROR
-- **Real-time Streaming**: Live updates as actions occur
-- **Export Capability**: Download logs for analysis
-- **Session Persistence**: Logs stored in browser session
-
-### For Claude Debugging
-
-When reporting issues:
-
-1. **Open Debug Logs** panel to capture relevant information
-2. **Export logs** using the developer panel
-3. **Include error details** and steps to reproduce
 
 ## Support
 
