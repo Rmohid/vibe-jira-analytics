@@ -192,6 +192,85 @@ const extractSourceLabels = (labels) => {
 };
 
 // Helper function to extract history transitions from changelog
+// Calculate incoming/outgoing flags based on priority level transitions
+const calculatePriorityFlags = (priorityLevelTransitions, currentPriorityLevel, createdDate, ticketKey = 'Unknown') => {
+  const flags = {
+    incomingDate: null,
+    outgoingDate: null,
+    isIncoming: false,
+    isOutgoing: false
+  };
+
+  console.log(`Calculating PL flags for ${ticketKey}: currentPL=${currentPriorityLevel}, transitions=${priorityLevelTransitions?.length || 0}`);
+
+  if (priorityLevelTransitions && priorityLevelTransitions.length > 0) {
+    // Sort transitions by timestamp to ensure correct order
+    const sortedTransitions = [...priorityLevelTransitions].sort((a, b) => 
+      new Date(a.timestamp) - new Date(b.timestamp)
+    );
+
+    // Log all transitions for debugging
+    console.log(`  Transitions for ${ticketKey}:`);
+    sortedTransitions.forEach((t, i) => {
+      console.log(`    ${i + 1}. ${t.timestamp}: ${t.fromValue} → ${t.toValue}`);
+    });
+
+    // INCOMING: First time PL gets assigned a value (transition TO a number)
+    const firstPLAssignment = sortedTransitions.find(transition => 
+      (transition.fromValue === null || transition.fromValue === undefined) && 
+      transition.toValue !== null && transition.toValue !== undefined
+    );
+    
+    if (firstPLAssignment) {
+      flags.incomingDate = firstPLAssignment.timestamp;
+      flags.isIncoming = true;
+      console.log(`  → Incoming: ${firstPLAssignment.timestamp} (PL assigned: ${firstPLAssignment.toValue})`);
+    } else if (sortedTransitions.length > 0 && sortedTransitions[0].fromValue !== null) {
+      // If first transition is not from null, ticket was created with PL
+      flags.incomingDate = createdDate;
+      flags.isIncoming = true;
+      console.log(`  → Incoming: ${createdDate} (created with PL, first transition from ${sortedTransitions[0].fromValue})`);
+    }
+
+    // OUTGOING: PL goes to null (completed/cleared) OR goes over 99 (deprioritized)
+    const outgoingTransition = sortedTransitions.find(transition => {
+      // Case 1: PL cleared (becomes null) - ticket completed
+      if (transition.toValue === null || transition.toValue === undefined) {
+        return true;
+      }
+      // Case 2: PL goes over 99 (deprioritized)
+      if (transition.toValue > 99 && 
+          (transition.fromValue === null || transition.fromValue === undefined || transition.fromValue <= 99)) {
+        return true;
+      }
+      return false;
+    });
+    
+    if (outgoingTransition) {
+      flags.outgoingDate = outgoingTransition.timestamp;
+      flags.isOutgoing = true;
+      const reason = outgoingTransition.toValue === null ? 'PL cleared' : `PL set to ${outgoingTransition.toValue}`;
+      console.log(`  → Outgoing: ${outgoingTransition.timestamp} (${reason})`);
+    }
+  } else if (currentPriorityLevel !== null && currentPriorityLevel !== undefined) {
+    // No transitions but ticket has PL - assume it was set at creation
+    flags.incomingDate = createdDate;
+    flags.isIncoming = true;
+    console.log(`  → Incoming: ${createdDate} (no transitions, PL=${currentPriorityLevel})`);
+    
+    // If current PL is > 99, also flag as outgoing at creation
+    if (currentPriorityLevel > 99) {
+      flags.outgoingDate = createdDate;
+      flags.isOutgoing = true;
+      console.log(`  → Outgoing: ${createdDate} (created with PL > 99: ${currentPriorityLevel})`);
+    }
+  } else {
+    console.log(`  → No PL flags: no transitions and no current PL`);
+  }
+
+  return flags;
+};
+
 const extractTransitionHistory = (changelog) => {
   if (!changelog || !changelog.histories) {
     return {
@@ -221,7 +300,7 @@ const extractTransitionHistory = (changelog) => {
         });
       }
       
-      if (item.field === 'customfield_11129') { // Priority Level field
+      if (item.field === 'customfield_11129' || item.field === 'Priority Level') { // Priority Level field
         priorityLevelTransitions.push({
           timestamp,
           author: author?.displayName || author?.name || 'Unknown',
@@ -474,6 +553,12 @@ app.post('/api/jira/current-tickets', async (req, res) => {
     const tickets = batchResult.issues.map(issue => {
       const priorityLevel = getPriorityLevel(issue);
       const transitionHistory = extractTransitionHistory(issue.changelog);
+      const priorityFlags = calculatePriorityFlags(
+        transitionHistory.priorityLevelTransitions, 
+        priorityLevel, 
+        issue.fields.created,
+        issue.key
+      );
       
       return {
         key: issue.key,
@@ -491,6 +576,12 @@ app.post('/api/jira/current-tickets', async (req, res) => {
         statusTransitions: transitionHistory.statusTransitions,
         priorityLevelTransitions: transitionHistory.priorityLevelTransitions,
         labelTransitions: transitionHistory.labelTransitions,
+        
+        // Priority flow flags
+        incomingDate: priorityFlags.incomingDate,
+        outgoingDate: priorityFlags.outgoingDate,
+        isIncoming: priorityFlags.isIncoming,
+        isOutgoing: priorityFlags.isOutgoing,
         
         // Summary stats for quick access
         totalStatusTransitions: transitionHistory.statusTransitions.length,
@@ -665,13 +756,15 @@ app.post('/api/jira/historical-data', async (req, res) => {
     let historicalJQL;
     if (jqlQuery) {
       // Modify the query to get historical data (extend date range for trends)
-      historicalJQL = jqlQuery.replace(/created >= -\d+d/, 'created >= -90d');
-      if (!historicalJQL.includes('created >=')) {
-        historicalJQL += ' AND created >= -90d';
+      // Fix JQL date syntax - use startOfDay() function
+      historicalJQL = jqlQuery.replace(/created >= -\d+d/, 'created >= startOfDay(-90d)');
+      historicalJQL = historicalJQL.replace(/updated >= -\d+d/, 'updated >= startOfDay(-90d)');
+      if (!historicalJQL.includes('created >=') && !historicalJQL.includes('updated >=')) {
+        historicalJQL += ' AND created >= startOfDay(-90d)';
       }
     } else {
       // Default historical query
-      historicalJQL = `project = ${project} AND cf[11129] > 0 AND created >= -90d ORDER BY created ASC`;
+      historicalJQL = `project = ${project} AND cf[11129] > 0 AND created >= startOfDay(-90d) ORDER BY created ASC`;
     }
     
     console.log(`Executing historical JQL: ${historicalJQL}`);
@@ -696,6 +789,12 @@ app.post('/api/jira/historical-data', async (req, res) => {
     const tickets = batchResult.issues.map(issue => {
       const priorityLevel = getPriorityLevel(issue);
       const transitionHistory = extractTransitionHistory(issue.changelog);
+      const priorityFlags = calculatePriorityFlags(
+        transitionHistory.priorityLevelTransitions, 
+        priorityLevel, 
+        issue.fields.created,
+        issue.key
+      );
       
       return {
         key: issue.key,
@@ -711,6 +810,12 @@ app.post('/api/jira/historical-data', async (req, res) => {
         statusTransitions: transitionHistory.statusTransitions,
         priorityLevelTransitions: transitionHistory.priorityLevelTransitions,
         labelTransitions: transitionHistory.labelTransitions,
+        
+        // Priority flow flags
+        incomingDate: priorityFlags.incomingDate,
+        outgoingDate: priorityFlags.outgoingDate,
+        isIncoming: priorityFlags.isIncoming,
+        isOutgoing: priorityFlags.isOutgoing,
         
         // Summary stats
         totalStatusTransitions: transitionHistory.statusTransitions.length,
@@ -784,16 +889,16 @@ app.post('/api/jira/historical-data', async (req, res) => {
     // Calculate source label distribution from all tickets
     const sourceLabelsMap = {};
     const colors = {
-      'src-bug-fix': '#ff6b00',
+      'src-bug-fix': '#22c55e',
       'src-new-feature': '#3b82f6', 
       'src-tech-debt': '#f59e0b',
-      'src-maintenance': '#6b7280',
-      'src-enhancement': '#8b5cf6',
-      'src-research': '#059669',
-      'src-critical': '#7c2d12',
+      'src-maintenance': '#06b6d4',
+      'src-enhancement': '#ec4899',
+      'src-research': '#84cc16',
+      'src-critical': '#dc2626',
       'src-golive-critical': '#ef4444', // Red - very distinct
-      'src-integration': '#0891b2',
-      'src-unknown': '#94a3b8'
+      'src-integration': '#a855f7',
+      'src-unknown': '#6b7280'
     };
     
     // Generate a color palette for any additional labels

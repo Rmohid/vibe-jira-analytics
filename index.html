@@ -169,14 +169,248 @@
         const TEST_SCENARIOS = {
             normal: {
                 name: "Normal Load",
-                description: "Typical production workload",
+                description: "Typical production workload with realistic PL transitions",
                 currentCounts: { high: 8, medium: 23, low: 67, total: 98 },
                 tickets: [
-                    { key: 'KSD-1001', summary: 'Database performance optimization needed', status: 'In Progress', priorityLevel: 5, ageInDays: 3, labels: ['src-tech-debt'] },
-                    { key: 'KSD-1002', summary: 'User authentication system enhancement', status: 'Open', priorityLevel: 25, ageInDays: 7, labels: ['src-enhancement'] },
-                    { key: 'KSD-1003', summary: 'API rate limiting implementation', status: 'Code Review', priorityLevel: 15, ageInDays: 12, labels: ['src-new-feature'] },
-                    { key: 'KSD-1004', summary: 'Frontend responsive design fixes', status: 'Testing', priorityLevel: 150, ageInDays: 5, labels: ['src-bug-fix'] },
-                    { key: 'KSD-1005', summary: 'Memory leak investigation in production', status: 'Blocked', priorityLevel: 2, ageInDays: 15, labels: ['src-bug-fix'] }
+                    { 
+                        key: 'KSD-1001', 
+                        summary: 'Database performance optimization needed', 
+                        status: 'In Progress', 
+                        priorityLevel: 5, 
+                        ageInDays: 3, 
+                        labels: ['src-tech-debt'],
+                        created: '2025-06-29T09:00:00.000-0400',
+                        priorityLevelTransitions: [],
+                        incomingDate: '2025-06-29T09:00:00.000-0400',
+                        outgoingDate: null,
+                        isIncoming: true,
+                        isOutgoing: false
+                    },
+                    { 
+                        key: 'KSD-1002', 
+                        summary: 'User authentication system enhancement', 
+                        status: 'Open', 
+                        priorityLevel: 25, 
+                        ageInDays: 7, 
+                        labels: ['src-enhancement'],
+                        created: '2025-06-25T14:30:00.000-0400',
+                        priorityLevelTransitions: [
+                            {
+                                timestamp: '2025-06-26T10:15:00.000-0400',
+                                author: 'System Admin',
+                                fromValue: null,
+                                toValue: 50
+                            },
+                            {
+                                timestamp: '2025-06-27T16:20:00.000-0400',
+                                author: 'Project Manager',
+                                fromValue: 50,
+                                toValue: 25
+                            }
+                        ],
+                        incomingDate: '2025-06-26T10:15:00.000-0400',
+                        outgoingDate: null,
+                        isIncoming: true,
+                        isOutgoing: false
+                    },
+                    { 
+                        key: 'KSD-1003', 
+                        summary: 'API rate limiting implementation', 
+                        status: 'Code Review', 
+                        priorityLevel: 15, 
+                        ageInDays: 12, 
+                        labels: ['src-new-feature'],
+                        created: '2025-06-20T11:00:00.000-0400',
+                        priorityLevelTransitions: [],
+                        incomingDate: '2025-06-20T11:00:00.000-0400',
+                        outgoingDate: null,
+                        isIncoming: true,
+                        isOutgoing: false
+                    },
+                    { 
+                        key: 'KSD-1004', 
+                        summary: 'Frontend responsive design fixes', 
+                        status: 'Testing', 
+                        priorityLevel: 150, 
+                        ageInDays: 5, 
+                        labels: ['src-bug-fix'],
+                        created: '2025-06-27T08:30:00.000-0400',
+                        priorityLevelTransitions: [],
+                        incomingDate: '2025-06-27T08:30:00.000-0400',
+                        outgoingDate: '2025-06-27T08:30:00.000-0400',
+                        isIncoming: true,
+                        isOutgoing: true
+                    },
+                    { 
+                        key: 'KSD-1005', 
+                        summary: 'Memory leak investigation in production', 
+                        status: 'Blocked', 
+                        priorityLevel: 2, 
+                        ageInDays: 15, 
+                        labels: ['src-bug-fix'],
+                        created: '2025-06-17T13:45:00.000-0400',
+                        priorityLevelTransitions: [
+                            {
+                                timestamp: '2025-06-18T09:00:00.000-0400',
+                                author: 'System Admin',
+                                fromValue: null,
+                                toValue: 50
+                            },
+                            {
+                                timestamp: '2025-06-19T14:30:00.000-0400',
+                                author: 'Tech Lead',
+                                fromValue: 50,
+                                toValue: 2
+                            }
+                        ],
+                        incomingDate: '2025-06-18T09:00:00.000-0400',
+                        outgoingDate: null,
+                        isIncoming: true,
+                        isOutgoing: false
+                    }
+                ]
+            },
+            
+            priorityTransitions: {
+                name: "Priority Transitions",
+                description: "Tickets demonstrating incoming/outgoing behavior with PL changes",
+                currentCounts: { high: 3, medium: 2, low: 3, total: 8 },
+                tickets: [
+                    {
+                        key: 'KSD-2001',
+                        summary: 'Critical security vulnerability - immediate fix needed',
+                        status: 'In Progress',
+                        priorityLevel: 1,
+                        ageInDays: 2,
+                        labels: ['src-bug-fix', 'critical'],
+                        created: '2025-06-30T08:00:00.000-0400',
+                        priorityLevelTransitions: [
+                            {
+                                timestamp: '2025-06-30T08:30:00.000-0400',
+                                author: 'Security Team',
+                                fromValue: null,
+                                toValue: 1
+                            }
+                        ],
+                        incomingDate: '2025-06-30T08:30:00.000-0400',
+                        outgoingDate: null,
+                        isIncoming: true,
+                        isOutgoing: false
+                    },
+                    {
+                        key: 'KSD-2002',
+                        summary: 'Feature request escalated then deprioritized',
+                        status: 'Open',
+                        priorityLevel: 8,
+                        ageInDays: 5,
+                        labels: ['src-new-feature'],
+                        created: '2025-06-27T10:00:00.000-0400',
+                        priorityLevelTransitions: [
+                            {
+                                timestamp: '2025-06-28T09:00:00.000-0400',
+                                author: 'System Admin',
+                                fromValue: null,
+                                toValue: 50
+                            },
+                            {
+                                timestamp: '2025-06-29T14:30:00.000-0400',
+                                author: 'Product Manager',
+                                fromValue: 50,
+                                toValue: 8
+                            }
+                        ],
+                        incomingDate: '2025-06-28T09:00:00.000-0400',
+                        outgoingDate: null,
+                        isIncoming: true,
+                        isOutgoing: false
+                    },
+                    {
+                        key: 'KSD-2003',
+                        summary: 'Documentation update downgraded',
+                        status: 'Waiting',
+                        priorityLevel: 200,
+                        ageInDays: 8,
+                        labels: ['src-tech-debt'],
+                        created: '2025-06-24T15:00:00.000-0400',
+                        priorityLevelTransitions: [
+                            {
+                                timestamp: '2025-06-24T15:30:00.000-0400',
+                                author: 'System Admin',
+                                fromValue: null,
+                                toValue: 50
+                            },
+                            {
+                                timestamp: '2025-06-26T11:00:00.000-0400',
+                                author: 'Team Lead',
+                                fromValue: 50,
+                                toValue: 200
+                            }
+                        ],
+                        incomingDate: '2025-06-24T15:30:00.000-0400',
+                        outgoingDate: '2025-06-26T11:00:00.000-0400',
+                        isIncoming: true,
+                        isOutgoing: true
+                    },
+                    {
+                        key: 'KSD-2004',
+                        summary: 'Bug fix completed and PL cleared',
+                        status: 'Closed',
+                        priorityLevel: null,
+                        ageInDays: 12,
+                        labels: ['src-bug-fix'],
+                        created: '2025-06-20T09:00:00.000-0400',
+                        priorityLevelTransitions: [
+                            {
+                                timestamp: '2025-06-20T09:30:00.000-0400',
+                                author: 'System Admin',
+                                fromValue: null,
+                                toValue: 25
+                            },
+                            {
+                                timestamp: '2025-06-21T10:15:00.000-0400',
+                                author: 'Developer',
+                                fromValue: 25,
+                                toValue: 5
+                            },
+                            {
+                                timestamp: '2025-06-22T16:45:00.000-0400',
+                                author: 'QA Team',
+                                fromValue: 5,
+                                toValue: null
+                            }
+                        ],
+                        incomingDate: '2025-06-20T09:30:00.000-0400',
+                        outgoingDate: '2025-06-22T16:45:00.000-0400',
+                        isIncoming: true,
+                        isOutgoing: true
+                    },
+                    {
+                        key: 'KSD-2005',
+                        summary: 'Task deprioritized to low importance',
+                        status: 'Waiting',
+                        priorityLevel: 150,
+                        ageInDays: 8,
+                        labels: ['src-tech-debt'],
+                        created: '2025-06-24T11:00:00.000-0400',
+                        priorityLevelTransitions: [
+                            {
+                                timestamp: '2025-06-24T11:30:00.000-0400',
+                                author: 'System Admin',
+                                fromValue: null,
+                                toValue: 10
+                            },
+                            {
+                                timestamp: '2025-06-26T14:20:00.000-0400',
+                                author: 'Team Lead',
+                                fromValue: 10,
+                                toValue: 150
+                            }
+                        ],
+                        incomingDate: '2025-06-24T11:30:00.000-0400',
+                        outgoingDate: '2025-06-26T14:20:00.000-0400',
+                        isIncoming: true,
+                        isOutgoing: true
+                    }
                 ]
             },
             
@@ -490,34 +724,32 @@
                                         };
                                     }
                                     
-                                    // Count incoming tickets (created)
-                                    if (realData.timeSeries) {
-                                        realData.timeSeries.forEach(dayData => {
+                                    // Count incoming tickets using pre-calculated flags
+                                    if (realData.historicalTrend) {
+                                        realData.historicalTrend.forEach(dayData => {
                                             if (dayData.tickets) {
                                                 dayData.tickets.forEach(ticket => {
-                                                    const createdDate = ticket.created ? ticket.created.split('T')[0] : null;
-                                                    if (createdDate && dateMap[createdDate]) {
-                                                        dateMap[createdDate].incoming++;
+                                                    if (ticket.isIncoming && ticket.incomingDate) {
+                                                        const incomingDate = ticket.incomingDate.split('T')[0];
+                                                        if (dateMap[incomingDate]) {
+                                                            dateMap[incomingDate].incoming++;
+                                                        }
                                                     }
                                                 });
                                             }
                                         });
                                     }
                                     
-                                    // Count outgoing tickets (resolved/closed)
-                                    if (realData.timeSeries) {
-                                        realData.timeSeries.forEach(dayData => {
+                                    // Count outgoing tickets using pre-calculated flags
+                                    if (realData.historicalTrend) {
+                                        realData.historicalTrend.forEach(dayData => {
                                             if (dayData.tickets) {
                                                 dayData.tickets.forEach(ticket => {
-                                                    if (ticket.statusTransitions) {
-                                                        ticket.statusTransitions.forEach(transition => {
-                                                            if (['Done', 'Closed', 'Resolved', 'Complete', 'Fixed'].includes(transition.toValue)) {
-                                                                const resolvedDate = transition.timestamp ? transition.timestamp.split('T')[0] : null;
-                                                                if (resolvedDate && dateMap[resolvedDate]) {
-                                                                    dateMap[resolvedDate].outgoing++;
-                                                                }
-                                                            }
-                                                        });
+                                                    if (ticket.isOutgoing && ticket.outgoingDate) {
+                                                        const outgoingDate = ticket.outgoingDate.split('T')[0];
+                                                        if (dateMap[outgoingDate]) {
+                                                            dateMap[outgoingDate].outgoing++;
+                                                        }
                                                     }
                                                 });
                                             }
@@ -547,8 +779,8 @@
                                                 return (
                                                     <div className="bg-white p-3 border border-gray-300 rounded shadow">
                                                         <p className="font-semibold">{label}</p>
-                                                        <p className="text-green-600">Incoming: {data.incoming}</p>
-                                                        <p className="text-red-600">Outgoing: {data.outgoing}</p>
+                                                        <p className="text-green-600">Incoming (PL Assigned): {data.incoming}</p>
+                                                        <p className="text-red-600">Outgoing (PL > 99): {data.outgoing}</p>
                                                         <p className={`font-semibold ${data.net >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
                                                             Net: {data.net >= 0 ? '+' : ''}{data.net}
                                                         </p>
@@ -564,7 +796,7 @@
                                         dataKey="incoming" 
                                         stroke="#22c55e" 
                                         strokeWidth={2}
-                                        name="Incoming (Created)" 
+                                        name="Incoming (PL Assigned)" 
                                         dot={{ fill: '#22c55e', strokeWidth: 2, r: 3 }}
                                     />
                                     <Line 
@@ -572,7 +804,7 @@
                                         dataKey="outgoing" 
                                         stroke="#ef4444" 
                                         strokeWidth={2}
-                                        name="Outgoing (Resolved)" 
+                                        name="Outgoing (PL > 99)" 
                                         dot={{ fill: '#ef4444', strokeWidth: 2, r: 3 }}
                                     />
                                     <Line 
