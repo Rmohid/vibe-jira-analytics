@@ -26,7 +26,7 @@ export const ConfigPanel = ({
         },
         {
             name: 'Source Label Analysis',
-            query: () => `project = ${jiraConfig.project} AND labels in ("src-bug-fix", "src-new-feature", "src-tech-debt") AND created >= -${timePeriod === 'custom' ? customDays : timePeriod.replace('d', '')}d`
+            query: () => `project = ${jiraConfig.project} AND labels in ("src-bug-fix", "src-new-feature", "src-tech-debt", "src-maintenance", "src-research", "src-integration", "src-golive-critical", "src-unknown", "unplanned") AND created >= -${timePeriod === 'custom' ? customDays : timePeriod.replace('d', '')}d`
         },
         {
             name: 'All Active Tickets',

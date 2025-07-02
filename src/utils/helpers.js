@@ -11,7 +11,7 @@ export const loadSavedConfig = () => {
                 email: parsed.email || 'robert.mohid@versaterm.com',
                 apiToken: parsed.apiToken || '',
                 project: parsed.project || 'KSD',
-                jqlQuery: parsed.jqlQuery || 'project = KSD AND cf[11129] > 0 AND created >= -30d ORDER BY created DESC'
+                jqlQuery: parsed.jqlQuery || 'project = KSD AND labels in (src-bug-fix, src-new-feature, src-tech-debt, src-maintenance, src-research, src-integration, src-golive-critical, src-unknown, unplanned)'
             };
         }
     } catch (e) {
@@ -22,14 +22,14 @@ export const loadSavedConfig = () => {
         email: 'robert.mohid@versaterm.com',
         apiToken: '',
         project: 'KSD',
-        jqlQuery: 'project = KSD AND cf[11129] > 0 AND created >= -30d ORDER BY created DESC'
+        jqlQuery: 'project = KSD AND labels in (src-bug-fix, src-new-feature, src-tech-debt, src-maintenance, src-research, src-integration, src-golive-critical, src-unknown, unplanned)'
     };
 };
 
 // Generate JQL query based on time period
 export const generateJQL = (project, timePeriod, customDays) => {
     const days = timePeriod === 'custom' ? customDays : timePeriod.replace('d', '');
-    return `project = ${project} AND cf[11129] > 0 AND created >= -${days}d ORDER BY created DESC`;
+    return `project = ${project} AND labels in (src-bug-fix, src-new-feature, src-tech-debt, src-maintenance, src-research, src-integration, src-golive-critical, src-unknown, unplanned) AND created >= -${days}d ORDER BY created DESC`;
 };
 
 // Note: Chart availability check removed - now using proper npm imports
