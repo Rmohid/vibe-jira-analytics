@@ -232,6 +232,7 @@ Logger.state('COMPONENT', newState, 'ACTION_TYPE')
 - Tokens masked in UI display
 - No credentials in logs or server responses
 - All data remains on local machine
+- Data directory excluded from git via .gitignore
 
 ## Performance Optimization
 - Vite for fast development builds

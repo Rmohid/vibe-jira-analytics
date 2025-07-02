@@ -300,6 +300,7 @@ npm run build
 - Tokens are masked in the UI
 - No credentials are logged or transmitted to external services
 - All data remains on your local machine
+- Data files are excluded from version control via .gitignore
 
 ## Support
 
