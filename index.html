@@ -822,33 +822,40 @@
                             {/* Summary Statistics */}
                             <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
                                 {(() => {
-                                    const last30Days = (() => {
+                                    // Calculate number of days based on current time period selection
+                                    const days = timePeriod === 'custom' ? customDays : parseInt(timePeriod.replace('d', ''));
+                                    
+                                    const currentPeriodStats = (() => {
                                         let totalIncoming = 0;
                                         let totalOutgoing = 0;
                                         const today = new Date();
-                                        const thirtyDaysAgo = new Date(today);
-                                        thirtyDaysAgo.setDate(today.getDate() - 30);
                                         
-                                        if (realData.timeSeries) {
-                                            realData.timeSeries.forEach(dayData => {
+                                        // Create date range for the selected period
+                                        const periodDates = new Set();
+                                        for (let i = days - 1; i >= 0; i--) {
+                                            const date = new Date(today);
+                                            date.setDate(today.getDate() - i);
+                                            const dateStr = date.toISOString().split('T')[0];
+                                            periodDates.add(dateStr);
+                                        }
+                                        
+                                        // Count incoming tickets using pre-calculated flags (same as chart)
+                                        if (realData.historicalTrend) {
+                                            realData.historicalTrend.forEach(dayData => {
                                                 if (dayData.tickets) {
                                                     dayData.tickets.forEach(ticket => {
-                                                        // Count incoming
-                                                        const createdDate = ticket.created ? new Date(ticket.created) : null;
-                                                        if (createdDate && createdDate >= thirtyDaysAgo) {
-                                                            totalIncoming++;
+                                                        if (ticket.isIncoming && ticket.incomingDate) {
+                                                            const incomingDate = ticket.incomingDate.split('T')[0];
+                                                            if (periodDates.has(incomingDate)) {
+                                                                totalIncoming++;
+                                                            }
                                                         }
                                                         
-                                                        // Count outgoing
-                                                        if (ticket.statusTransitions) {
-                                                            ticket.statusTransitions.forEach(transition => {
-                                                                if (['Done', 'Closed', 'Resolved', 'Complete', 'Fixed'].includes(transition.toValue)) {
-                                                                    const resolvedDate = transition.timestamp ? new Date(transition.timestamp) : null;
-                                                                    if (resolvedDate && resolvedDate >= thirtyDaysAgo) {
-                                                                        totalOutgoing++;
-                                                                    }
-                                                                }
-                                                            });
+                                                        if (ticket.isOutgoing && ticket.outgoingDate) {
+                                                            const outgoingDate = ticket.outgoingDate.split('T')[0];
+                                                            if (periodDates.has(outgoingDate)) {
+                                                                totalOutgoing++;
+                                                            }
                                                         }
                                                     });
                                                 }
@@ -858,22 +865,22 @@
                                         return { totalIncoming, totalOutgoing };
                                     })();
                                     
-                                    const netFlow = last30Days.totalIncoming - last30Days.totalOutgoing;
+                                    const netFlow = currentPeriodStats.totalIncoming - currentPeriodStats.totalOutgoing;
                                     const avgDaily = {
-                                        incoming: (last30Days.totalIncoming / 30).toFixed(1),
-                                        outgoing: (last30Days.totalOutgoing / 30).toFixed(1),
-                                        net: (netFlow / 30).toFixed(1)
+                                        incoming: (currentPeriodStats.totalIncoming / days).toFixed(1),
+                                        outgoing: (currentPeriodStats.totalOutgoing / days).toFixed(1),
+                                        net: (netFlow / days).toFixed(1)
                                     };
                                     
                                     return (
                                         <>
                                             <div className="bg-green-50 p-3 rounded-lg text-center">
-                                                <div className="text-2xl font-bold text-green-600">{last30Days.totalIncoming}</div>
+                                                <div className="text-2xl font-bold text-green-600">{currentPeriodStats.totalIncoming}</div>
                                                 <div className="text-sm text-green-700">Total Incoming</div>
                                                 <div className="text-xs text-green-600">{avgDaily.incoming}/day avg</div>
                                             </div>
                                             <div className="bg-red-50 p-3 rounded-lg text-center">
-                                                <div className="text-2xl font-bold text-red-600">{last30Days.totalOutgoing}</div>
+                                                <div className="text-2xl font-bold text-red-600">{currentPeriodStats.totalOutgoing}</div>
                                                 <div className="text-sm text-red-700">Total Outgoing</div>
                                                 <div className="text-xs text-red-600">{avgDaily.outgoing}/day avg</div>
                                             </div>
@@ -888,12 +895,12 @@
                                             </div>
                                             <div className="bg-gray-50 p-3 rounded-lg text-center">
                                                 <div className="text-2xl font-bold text-gray-600">
-                                                    {last30Days.totalOutgoing > 0 ? ((last30Days.totalIncoming / last30Days.totalOutgoing) * 100).toFixed(0) : '∞'}%
+                                                    {currentPeriodStats.totalOutgoing > 0 ? ((currentPeriodStats.totalIncoming / currentPeriodStats.totalOutgoing) * 100).toFixed(0) : '∞'}%
                                                 </div>
                                                 <div className="text-sm text-gray-700">In/Out Ratio</div>
                                                 <div className="text-xs text-gray-600">
-                                                    {last30Days.totalOutgoing > 0 ? 
-                                                        (last30Days.totalIncoming / last30Days.totalOutgoing > 1 ? 'Growing' : 'Shrinking') : 
+                                                    {currentPeriodStats.totalOutgoing > 0 ? 
+                                                        (currentPeriodStats.totalIncoming / currentPeriodStats.totalOutgoing > 1 ? 'Growing' : 'Shrinking') : 
                                                         'No outgoing'
                                                     }
                                                 </div>
