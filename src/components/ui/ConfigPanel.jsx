@@ -30,7 +30,7 @@ export const ConfigPanel = ({
         },
         {
             name: 'All Active Tickets',
-            query: () => `project = ${jiraConfig.project} AND status not in ("Done", "Closed", "Resolved") ORDER BY cf[11129] ASC`
+            query: () => `project = ${jiraConfig.project} AND status not in ("Done", "Closed") ORDER BY cf[11129] ASC`
         }
     ]
 

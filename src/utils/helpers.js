@@ -29,7 +29,7 @@ export const loadSavedConfig = () => {
 // Generate JQL query based on time period
 export const generateJQL = (project, timePeriod, customDays) => {
     const days = timePeriod === 'custom' ? customDays : timePeriod.replace('d', '');
-    return `project = ${project} AND labels in (src-bug-fix, src-new-feature, src-tech-debt, src-maintenance, src-research, src-integration, src-golive-critical, src-unknown, unplanned) AND created >= -${days}d ORDER BY created DESC`;
+    return `project = ${project} AND cf[11129] > 0 AND created >= -${days}d ORDER BY created DESC`;
 };
 
 // Note: Chart availability check removed - now using proper npm imports

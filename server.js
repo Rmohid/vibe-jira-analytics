@@ -760,11 +760,19 @@ app.post('/api/jira/historical-data', async (req, res) => {
     let historicalJQL;
     if (jqlQuery) {
       // Modify the query to get historical data (extend date range for trends)
-      // Fix JQL date syntax - use startOfDay() function
-      historicalJQL = jqlQuery.replace(/created >= -\d+d/, 'created >= startOfDay(-90d)');
-      historicalJQL = historicalJQL.replace(/updated >= -\d+d/, 'updated >= startOfDay(-90d)');
+      // Fix JQL date syntax - use startOfDay() function and handle various spacing patterns
+      historicalJQL = jqlQuery.replace(/created\s*>=\s*-\d+d/g, 'created >= startOfDay(-90d)');
+      historicalJQL = historicalJQL.replace(/updated\s*>=\s*-\d+d/g, 'updated >= startOfDay(-90d)');
       if (!historicalJQL.includes('created >=') && !historicalJQL.includes('updated >=')) {
-        historicalJQL += ' AND created >= startOfDay(-90d)';
+        // Insert the date filter before any ORDER BY clause to avoid syntax errors
+        const orderByIndex = historicalJQL.toUpperCase().indexOf('ORDER BY');
+        if (orderByIndex !== -1) {
+          historicalJQL = historicalJQL.substring(0, orderByIndex).trim() + 
+                         ' AND created >= startOfDay(-90d) ' + 
+                         historicalJQL.substring(orderByIndex);
+        } else {
+          historicalJQL += ' AND created >= startOfDay(-90d)';
+        }
       }
     } else {
       // Default historical query
