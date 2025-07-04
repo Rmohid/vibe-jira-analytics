@@ -2,6 +2,12 @@
 
 A modular React application that provides analytics and visualizations for Jira tickets. Built with Express.js backend and modern React frontend with Vite build system.
 
+## Dashboard Preview
+
+![Jira Analytics Dashboard](analytics-capture.png)
+
+*Example of the analytics dashboard showing priority distribution, backlog trends, source label analysis, and recent tickets*
+
 ## Features
 
 - **Modular Component Architecture**: Clean separation of concerns with single-responsibility components
