@@ -1,30 +1,42 @@
 import React from 'react'
 
-export const PriorityCardTooltip = ({ priority, tickets, averageAge, jiraConfig }) => {
+export const PriorityCardTooltip = ({ priority, tickets, maximumAge, jiraConfig }) => {
     if (!tickets || tickets.length === 0) return null
     
-    // Get the 5 most recent tickets for this priority
-    const recentTickets = tickets
+    // Get all tickets for this priority, sorted by most recent
+    // Use same categorization logic as backend
+    const categorizePriority = (priorityLevel) => {
+        if (priorityLevel === null || priorityLevel === undefined) return 'unknown'
+        if (priorityLevel < 10) return 'high'
+        if (priorityLevel < 100) return 'medium'
+        return 'low'
+    }
+    
+    const filteredTickets = tickets
         .filter(ticket => {
-            const pl = ticket.priorityLevel || ticket.currentPriorityLevel?.value
-            if (priority === 'high') return pl < 10
-            if (priority === 'medium') return pl >= 10 && pl < 100
-            if (priority === 'low') return pl >= 100
-            return true // total
+            // Use the same priority field as backend: customfield_11129
+            const pl = ticket.fields?.customfield_11129 || ticket.priorityLevel || ticket.currentPriorityLevel?.value
+            const category = categorizePriority(pl)
+            
+            if (priority === 'high') return category === 'high'
+            if (priority === 'medium') return category === 'medium'
+            if (priority === 'low') return category === 'low'
+            if (priority === 'unknown') return category === 'unknown'
+            return true // total - include all categories
         })
         .sort((a, b) => new Date(b.created) - new Date(a.created))
-        .slice(0, 5)
     
     return (
         <div className="absolute z-50 bg-white p-3 border border-gray-300 rounded-lg shadow-lg min-w-[250px] pointer-events-none">
             <div className="mb-2">
-                <p className="font-semibold text-sm">Average Age: {averageAge} days</p>
+                <p className="font-semibold text-sm">Maximum Age: {maximumAge} days</p>
+                <p className="font-semibold text-sm">Total Count: {filteredTickets.length}</p>
             </div>
-            {recentTickets.length > 0 && (
+            {filteredTickets.length > 0 && (
                 <>
-                    <p className="font-semibold text-sm mb-1">Recent Tickets:</p>
-                    <div className="space-y-1">
-                        {recentTickets.map(ticket => (
+                    <p className="font-semibold text-sm mb-1">All Tickets:</p>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                        {filteredTickets.map(ticket => (
                             <div key={ticket.key} className="text-xs">
                                 <a 
                                     href={`${jiraConfig.baseUrl}/browse/${ticket.key}`}

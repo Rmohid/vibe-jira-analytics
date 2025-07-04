@@ -44,25 +44,37 @@ export const OverviewPanel = ({ realData, jiraConfig, timePeriod, customDays }) 
         return colors[key] || colors.total
     }
     
-    const calculateAverageAge = (priority) => {
+    const calculateMaximumAge = (priority) => {
         if (!realData.tickets || realData.tickets.length === 0) return 0
         
+        // Use same categorization logic as backend
+        const categorizePriority = (priorityLevel) => {
+            if (priorityLevel === null || priorityLevel === undefined) return 'unknown'
+            if (priorityLevel < 10) return 'high'
+            if (priorityLevel < 100) return 'medium'
+            return 'low'
+        }
+        
         const filteredTickets = realData.tickets.filter(ticket => {
-            const pl = ticket.priorityLevel || ticket.currentPriorityLevel?.value
-            if (priority === 'high') return pl < 10
-            if (priority === 'medium') return pl >= 10 && pl < 100
-            if (priority === 'low') return pl >= 100
-            return true // total
+            // Use the same priority field as backend: customfield_11129
+            const pl = ticket.fields?.customfield_11129 || ticket.priorityLevel || ticket.currentPriorityLevel?.value
+            const category = categorizePriority(pl)
+            
+            if (priority === 'high') return category === 'high'
+            if (priority === 'medium') return category === 'medium'
+            if (priority === 'low') return category === 'low'
+            if (priority === 'unknown') return category === 'unknown'
+            return true // total - include all categories
         })
         
         if (filteredTickets.length === 0) return 0
         
-        const totalAge = filteredTickets.reduce((sum, ticket) => {
+        const maxAge = filteredTickets.reduce((max, ticket) => {
             const age = ticket.ageInDays || 0
-            return sum + age
+            return Math.max(max, age)
         }, 0)
         
-        return Math.round(totalAge / filteredTickets.length)
+        return maxAge
     }
     
     const handleMouseMove = (e) => {
@@ -75,7 +87,7 @@ export const OverviewPanel = ({ realData, jiraConfig, timePeriod, customDays }) 
     
     return (
         <div>
-            <h3 className="text-lg font-semibold mb-4">Current Overview - {getPeriodLabel()}</h3>
+            <h3 className="text-lg font-semibold mb-4">Current Overview: Top 7 - {getPeriodLabel()}</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {cardData.map(card => {
                 const colors = getCardColor(card.key)
@@ -106,7 +118,7 @@ export const OverviewPanel = ({ realData, jiraConfig, timePeriod, customDays }) 
                                 <PriorityCardTooltip
                                     priority={card.key}
                                     tickets={realData.tickets}
-                                    averageAge={calculateAverageAge(card.key)}
+                                    maximumAge={calculateMaximumAge(card.key)}
                                     jiraConfig={jiraConfig}
                                 />
                             </div>
