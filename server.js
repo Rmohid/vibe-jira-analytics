@@ -776,7 +776,7 @@ app.post('/api/jira/historical-data', async (req, res) => {
       }
     } else {
       // Default historical query
-      historicalJQL = `project = ${project} AND cf[11129] > 0 AND created >= startOfDay(-90d) ORDER BY created ASC`;
+      historicalJQL = `project = ${project} AND (cf[11129] > 0 or labels = "unplanned") AND created >= startOfDay(-90d) ORDER BY created ASC`;
     }
     
     console.log(`Executing historical JQL: ${historicalJQL}`);

@@ -2,11 +2,21 @@ import React, { useState } from 'react'
 import { AlertIcon, TrendingIcon, ClockIcon, DatabaseIcon } from '../icons/Icons'
 import { PriorityCardTooltip } from '../tooltips/PriorityCardTooltip'
 
-export const OverviewPanel = ({ realData, jiraConfig }) => {
+export const OverviewPanel = ({ realData, jiraConfig, timePeriod, customDays }) => {
     const [hoveredCard, setHoveredCard] = useState(null)
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
     
     if (!realData) return null
+    
+    const getPeriodLabel = () => {
+        if (timePeriod === 'custom') return `Last ${customDays} days`
+        if (timePeriod === '7d') return 'Last 7 days'
+        if (timePeriod === '30d') return 'Last 30 days'
+        if (timePeriod === '90d') return 'Last 90 days'
+        if (timePeriod === '180d') return 'Last 180 days'
+        if (timePeriod === '365d') return 'Last year'
+        return ''
+    }
     
     const cardData = [
         { key: 'high', label: 'High Priority', value: realData.currentCounts?.high || 0 },
@@ -64,7 +74,9 @@ export const OverviewPanel = ({ realData, jiraConfig }) => {
     }
     
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+            <h3 className="text-lg font-semibold mb-4">Current Overview - {getPeriodLabel()}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {cardData.map(card => {
                 const colors = getCardColor(card.key)
                 const shouldShowTooltip = card.key !== 'total' && card.value > 0
@@ -102,6 +114,7 @@ export const OverviewPanel = ({ realData, jiraConfig }) => {
                     </div>
                 )
             })}
+            </div>
         </div>
     )
 }

@@ -4,14 +4,24 @@ import { SourceLabelsTooltip } from '../tooltips/SourceLabelsTooltip'
 import { CustomAgeTooltip } from '../tooltips/CustomAgeTooltip'
 import { DASHBOARD_CONFIG } from '../../config/dashboardConfig'
 
-export const SourcesPanel = ({ realData, timePeriod, customDays }) => {
+export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays }) => {
     if (!realData) return null
     const sourceLabelsConfig = DASHBOARD_CONFIG.charts.sourceLabels
     const ageConfig = DASHBOARD_CONFIG.charts.averageAge
     
+    const getPeriodLabel = () => {
+        if (timePeriod === 'custom') return `Last ${customDays} days`
+        if (timePeriod === '7d') return 'Last 7 days'
+        if (timePeriod === '30d') return 'Last 30 days'
+        if (timePeriod === '90d') return 'Last 90 days'
+        if (timePeriod === '180d') return 'Last 180 days'
+        if (timePeriod === '365d') return 'Last year'
+        return ''
+    }
+    
     return (
         <div className="chart-container p-6">
-            <h3 className="text-lg font-semibold mb-4">Source Label Analysis Over Time</h3>
+            <h3 className="text-lg font-semibold mb-4">Source Label Analysis Over Time ({jiraConfig.project} Project) - {getPeriodLabel()}</h3>
             <p className="text-sm text-gray-600 mb-4">Shows the count of tickets with each source label over time. Multiple labels per ticket are counted separately.</p>
             
             {realData.sourceLabelsTimeSeries && (

@@ -1,11 +1,21 @@
 import React from 'react'
 
-export const TicketsPanel = ({ realData, jiraConfig }) => {
+export const TicketsPanel = ({ realData, jiraConfig, timePeriod, customDays }) => {
     if (!realData || !realData.tickets) return null
+    
+    const getPeriodLabel = () => {
+        if (timePeriod === 'custom') return `Last ${customDays} days`
+        if (timePeriod === '7d') return 'Last 7 days'
+        if (timePeriod === '30d') return 'Last 30 days'
+        if (timePeriod === '90d') return 'Last 90 days'
+        if (timePeriod === '180d') return 'Last 180 days'
+        if (timePeriod === '365d') return 'Last year'
+        return ''
+    }
     
     return (
         <div className="chart-container p-6">
-            <h3 className="text-lg font-semibold mb-4">Recent Tickets from {jiraConfig.project}</h3>
+            <h3 className="text-lg font-semibold mb-4">Recent Tickets from {jiraConfig.project} - {getPeriodLabel()}</h3>
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead>
