@@ -24,7 +24,10 @@ export const PriorityCardTooltip = ({ priority, tickets, maximumAge, jiraConfig 
             if (priority === 'unknown') return category === 'unknown'
             return true // total - include all categories
         })
-        .sort((a, b) => new Date(b.created) - new Date(a.created))
+        .sort((a, b) => {
+            // Sort all tickets by age (oldest first)
+            return (b.ageInDays || 0) - (a.ageInDays || 0)
+        })
     
     return (
         <div className="absolute z-50 bg-white p-3 border border-gray-300 rounded-lg shadow-lg min-w-[250px] pointer-events-none">
@@ -34,25 +37,44 @@ export const PriorityCardTooltip = ({ priority, tickets, maximumAge, jiraConfig 
             </div>
             {filteredTickets.length > 0 && (
                 <>
-                    <p className="font-semibold text-sm mb-1">All Tickets:</p>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {filteredTickets.map(ticket => (
-                            <div key={ticket.key} className="text-xs">
-                                <a 
-                                    href={`${jiraConfig.baseUrl}/browse/${ticket.key}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 hover:underline pointer-events-auto"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    {ticket.key}
-                                </a>
-                                <span className="text-gray-600 ml-1">
-                                    - {ticket.summary.length > 40 ? ticket.summary.substring(0, 40) + '...' : ticket.summary}
-                                </span>
-                            </div>
-                        ))}
+                    <p className="font-semibold text-sm mb-1">
+                        Top 3 Oldest Tickets:
+                    </p>
+                    <div className="space-y-1">
+                        {filteredTickets.slice(0, 3).map(ticket => {
+                            const ageInDays = ticket.ageInDays || 0
+                            const ageColor = ageInDays > 30 ? 'text-red-600' : ageInDays > 14 ? 'text-orange-600' : 'text-green-600'
+                            
+                            return (
+                                <div key={ticket.key} className="text-xs">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex-1 min-w-0">
+                                            <a 
+                                                href={`${jiraConfig.baseUrl}/browse/${ticket.key}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 hover:text-blue-800 hover:underline pointer-events-auto"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {ticket.key}
+                                            </a>
+                                            <span className="text-gray-600 ml-1">
+                                                - {ticket.summary.length > 30 ? ticket.summary.substring(0, 30) + '...' : ticket.summary}
+                                            </span>
+                                        </div>
+                                        <span className={`${ageColor} font-semibold ml-2 flex-shrink-0`}>
+                                            {ageInDays}d
+                                        </span>
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
+                    {filteredTickets.length > 3 && (
+                        <p className="text-xs text-gray-500 mt-1">
+                            ...and {filteredTickets.length - 3} more tickets
+                        </p>
+                    )}
                 </>
             )}
         </div>

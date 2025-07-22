@@ -13,6 +13,25 @@ export const TicketsPanel = ({ realData, jiraConfig, timePeriod, customDays }) =
         return ''
     }
     
+    // Sort tickets by PL (lowest first, null/undefined treated as highest), then by age (oldest first)
+    const sortedTickets = [...realData.tickets].sort((a, b) => {
+        // Get PL value from various possible locations
+        const plA = a.currentPriorityLevel?.value ?? a.priorityLevel ?? a.fields?.customfield_11129 ?? Number.MAX_VALUE
+        const plB = b.currentPriorityLevel?.value ?? b.priorityLevel ?? b.fields?.customfield_11129 ?? Number.MAX_VALUE
+        
+        // Convert to numbers to ensure proper comparison
+        const numPlA = Number(plA)
+        const numPlB = Number(plB)
+        
+        // First sort by PL (lowest first)
+        if (numPlA !== numPlB) {
+            return numPlA - numPlB
+        }
+        
+        // If PL is the same, sort by age (oldest first)
+        return (b.ageInDays || 0) - (a.ageInDays || 0)
+    })
+    
     return (
         <div className="chart-container p-6">
             <h3 className="text-lg font-semibold mb-4">Recent Tickets from {jiraConfig.project} - {getPeriodLabel()}</h3>
@@ -28,7 +47,7 @@ export const TicketsPanel = ({ realData, jiraConfig, timePeriod, customDays }) =
                         </tr>
                     </thead>
                     <tbody>
-                        {realData.tickets.slice(0, 10).map((ticket, index) => (
+                        {sortedTickets.slice(0, 10).map((ticket, index) => (
                             <tr key={index} className="border-b hover:bg-gray-50">
                                 <td className="py-2 font-medium">
                                     <a 
