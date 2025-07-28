@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { productionJiraAPI } from '../utils/api'
 import { Logger } from '../utils/logger'
 
-export const useJiraData = (jiraConfig, timePeriod, timeInterval, customDays) => {
+export const useJiraData = (jiraConfig, timePeriod, timeInterval, customDays, startDate, endDate) => {
     const [loading, setLoading] = useState(false)
     const [connectionStatus, setConnectionStatus] = useState('disconnected')
     const [lastSync, setLastSync] = useState(null)
@@ -21,8 +21,8 @@ export const useJiraData = (jiraConfig, timePeriod, timeInterval, customDays) =>
 
         try {
             const [currentData, historicalData] = await Promise.all([
-                productionJiraAPI('current-tickets', { ...jiraConfig, timePeriod, timeInterval }),
-                productionJiraAPI('historical-data', { ...jiraConfig, timePeriod, timeInterval })
+                productionJiraAPI('current-tickets', { ...jiraConfig, timePeriod, timeInterval, customDays, startDate, endDate }),
+                productionJiraAPI('historical-data', { ...jiraConfig, timePeriod, timeInterval, startDate, endDate })
             ])
 
             setRealData({
@@ -44,7 +44,7 @@ export const useJiraData = (jiraConfig, timePeriod, timeInterval, customDays) =>
         } finally {
             setLoading(false)
         }
-    }, [jiraConfig, timePeriod, timeInterval, customDays])
+    }, [jiraConfig, timePeriod, timeInterval, customDays, startDate, endDate])
     
     // Auto-refresh when time period or interval changes
     useEffect(() => {

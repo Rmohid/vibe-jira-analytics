@@ -26,9 +26,13 @@ const JiraAnalyticsApp = () => {
     const [jiraConfig, setJiraConfig] = useState(loadSavedConfig())
     
     // Time period and interval settings
-    const [timePeriod, setTimePeriod] = useState('30d') // 7d, 30d, 90d, 180d, 365d, custom
+    const [timePeriod, setTimePeriod] = useState('30d') // 7d, 30d, 90d, 180d, 365d, custom, dateRange
     const [timeInterval, setTimeInterval] = useState('daily') // daily, weekly, monthly
     const [customDays, setCustomDays] = useState(30)
+    
+    // Custom date range settings
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
     
     // Use custom hook for data management
     const {
@@ -41,7 +45,7 @@ const JiraAnalyticsApp = () => {
         setRealData,
         setError,
         setLoading
-    } = useJiraData(jiraConfig, timePeriod, timeInterval, customDays)
+    } = useJiraData(jiraConfig, timePeriod, timeInterval, customDays, startDate, endDate)
     
     // Charts are now available via npm imports
     
@@ -70,9 +74,9 @@ const JiraAnalyticsApp = () => {
     
     // Update JQL when time period changes
     useEffect(() => {
-        const newJQL = generateJQL(jiraConfig.project, timePeriod, customDays)
+        const newJQL = generateJQL(jiraConfig.project, timePeriod, customDays, startDate, endDate)
         setJiraConfig(prev => ({ ...prev, jqlQuery: newJQL }))
-    }, [timePeriod, customDays, jiraConfig.project])
+    }, [timePeriod, customDays, startDate, endDate, jiraConfig.project])
     
     // Save config to localStorage whenever it changes
     useEffect(() => {
@@ -131,6 +135,7 @@ const JiraAnalyticsApp = () => {
                                     <option value="180d">Last 180 days</option>
                                     <option value="365d">Last year</option>
                                     <option value="custom">Custom</option>
+                                    <option value="dateRange">Date Range</option>
                                 </select>
                                 {timePeriod === 'custom' && (
                                     <input
@@ -141,6 +146,33 @@ const JiraAnalyticsApp = () => {
                                         min="1"
                                         max="730"
                                     />
+                                )}
+                                {timePeriod === 'dateRange' && (
+                                    <div className="flex items-center space-x-2">
+                                        <input
+                                            type="date"
+                                            value={startDate}
+                                            onChange={(e) => setStartDate(e.target.value)}
+                                            className="text-sm border border-gray-300 rounded px-2 py-1"
+                                            max={endDate || undefined}
+                                        />
+                                        <span className="text-sm text-gray-500">to</span>
+                                        <input
+                                            type="date"
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                            className="text-sm border border-gray-300 rounded px-2 py-1"
+                                            min={startDate || undefined}
+                                            max={new Date().toISOString().split('T')[0]}
+                                        />
+                                    </div>
+                                )}
+                                
+                                {/* Date Range Validation Message */}
+                                {timePeriod === 'dateRange' && startDate && endDate && new Date(startDate) > new Date(endDate) && (
+                                    <div className="text-xs text-red-600 mt-1">
+                                        Start date must be before end date
+                                    </div>
                                 )}
                             </div>
 
@@ -212,6 +244,8 @@ const JiraAnalyticsApp = () => {
                     timePeriod={timePeriod}
                     customDays={customDays}
                     timeInterval={timeInterval}
+                    startDate={startDate}
+                    endDate={endDate}
                 />
 
                 {/* No Data State */}

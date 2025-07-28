@@ -5,11 +5,11 @@ import { SourcesPanel } from './panels/SourcesPanel'
 import { TicketsPanel } from './panels/TicketsPanel'
 
 // Dynamic Dashboard Renderer
-export const DashboardRenderer = ({ sections, realData, jiraConfig, timePeriod, customDays, timeInterval }) => {
+export const DashboardRenderer = ({ sections, realData, jiraConfig, timePeriod, customDays, timeInterval, startDate, endDate }) => {
     const renderSection = (section) => {
         if (!section.enabled) return null
         
-        const commonProps = { realData, jiraConfig, timePeriod, customDays, timeInterval }
+        const commonProps = { realData, jiraConfig, timePeriod, customDays, timeInterval, startDate, endDate }
         
         switch(section.component) {
             case 'OverviewPanel':

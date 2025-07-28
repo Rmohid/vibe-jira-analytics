@@ -2,13 +2,18 @@ import React, { useState } from 'react'
 import { AlertIcon, TrendingIcon, ClockIcon, DatabaseIcon } from '../icons/Icons'
 import { PriorityCardTooltip } from '../tooltips/PriorityCardTooltip'
 
-export const OverviewPanel = ({ realData, jiraConfig, timePeriod, customDays }) => {
+export const OverviewPanel = ({ realData, jiraConfig, timePeriod, customDays, startDate, endDate }) => {
     const [hoveredCard, setHoveredCard] = useState(null)
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
     
     if (!realData) return null
     
     const getPeriodLabel = () => {
+        if (timePeriod === 'dateRange' && startDate && endDate) {
+            const start = new Date(startDate).toLocaleDateString()
+            const end = new Date(endDate).toLocaleDateString()
+            return `${start} to ${end}`
+        }
         if (timePeriod === 'custom') return `Last ${customDays} days`
         if (timePeriod === '7d') return 'Last 7 days'
         if (timePeriod === '30d') return 'Last 30 days'

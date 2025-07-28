@@ -496,7 +496,7 @@ const batchJQLQuery = async (jira, jql, fields, maxResults = 2000, expand = []) 
 // Get current ticket counts and details
 app.post('/api/jira/current-tickets', async (req, res) => {
   try {
-    const { baseUrl, email, apiToken, project, jqlQuery, timePeriod, timeInterval } = req.body;
+    const { baseUrl, email, apiToken, project, jqlQuery, timePeriod, timeInterval, customDays, startDate, endDate } = req.body;
     
     // Save configuration if provided
     if (baseUrl || email || project) {
@@ -737,7 +737,7 @@ app.post('/api/jira/current-tickets', async (req, res) => {
 // Get historical data for time series analysis
 app.post('/api/jira/historical-data', async (req, res) => {
   try {
-    const { baseUrl, email, apiToken, project, jqlQuery, timePeriod, timeInterval } = req.body;
+    const { baseUrl, email, apiToken, project, jqlQuery, timePeriod, timeInterval, customDays, startDate, endDate } = req.body;
     
     // If no API token provided, try to load saved historical data
     if (!apiToken || apiToken === '') {

@@ -4,12 +4,17 @@ import { SourceLabelsTooltip } from '../tooltips/SourceLabelsTooltip'
 import { CustomAgeTooltip } from '../tooltips/CustomAgeTooltip'
 import { DASHBOARD_CONFIG } from '../../config/dashboardConfig'
 
-export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays }) => {
+export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, startDate, endDate }) => {
     if (!realData) return null
     const sourceLabelsConfig = DASHBOARD_CONFIG.charts.sourceLabels
     const ageConfig = DASHBOARD_CONFIG.charts.averageAge
     
     const getPeriodLabel = () => {
+        if (timePeriod === 'dateRange' && startDate && endDate) {
+            const start = new Date(startDate).toLocaleDateString()
+            const end = new Date(endDate).toLocaleDateString()
+            return `${start} to ${end}`
+        }
         if (timePeriod === 'custom') return `Last ${customDays} days`
         if (timePeriod === '7d') return 'Last 7 days'
         if (timePeriod === '30d') return 'Last 30 days'

@@ -27,7 +27,11 @@ export const loadSavedConfig = () => {
 };
 
 // Generate JQL query based on time period
-export const generateJQL = (project, timePeriod, customDays) => {
+export const generateJQL = (project, timePeriod, customDays, startDate, endDate) => {
+    if (timePeriod === 'dateRange' && startDate && endDate) {
+        return `project = ${project} AND (cf[11129] > 0 or labels = "unplanned") AND created >= "${startDate}" AND created <= "${endDate}" ORDER BY created DESC`;
+    }
+    
     const days = timePeriod === 'custom' ? customDays : timePeriod.replace('d', '');
     return `project = ${project} AND (cf[11129] > 0 or labels = "unplanned") AND created >= -${days}d ORDER BY created DESC`;
 };

@@ -3,18 +3,26 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { CustomTooltip } from '../tooltips/CustomTooltip'
 import { DASHBOARD_CONFIG } from '../../config/dashboardConfig'
 
-export const TrendsPanel = ({ realData, jiraConfig, timePeriod, customDays, timeInterval }) => {
+export const TrendsPanel = ({ realData, jiraConfig, timePeriod, customDays, timeInterval, startDate, endDate }) => {
     if (!realData || !realData.historicalTrend) return null
     const chartConfig = DASHBOARD_CONFIG.charts.historical
     
-    const title = `Ticket Backlog Size Over Time (${jiraConfig.project} Project) - ${
-        timePeriod === 'custom' ? `Last ${customDays} days` : 
-        timePeriod === '7d' ? 'Last 7 days' :
-        timePeriod === '30d' ? 'Last 30 days' :
-        timePeriod === '90d' ? 'Last 90 days' :
-        timePeriod === '180d' ? 'Last 180 days' :
-        timePeriod === '365d' ? 'Last year' : ''
-    } (${timeInterval === 'daily' ? 'Daily' : timeInterval === 'weekly' ? 'Weekly' : 'Monthly'})`
+    const getPeriodLabel = () => {
+        if (timePeriod === 'dateRange' && startDate && endDate) {
+            const start = new Date(startDate).toLocaleDateString()
+            const end = new Date(endDate).toLocaleDateString()
+            return `${start} to ${end}`
+        }
+        if (timePeriod === 'custom') return `Last ${customDays} days`
+        if (timePeriod === '7d') return 'Last 7 days'
+        if (timePeriod === '30d') return 'Last 30 days'
+        if (timePeriod === '90d') return 'Last 90 days'
+        if (timePeriod === '180d') return 'Last 180 days'
+        if (timePeriod === '365d') return 'Last year'
+        return ''
+    }
+    
+    const title = `Ticket Backlog Size Over Time (${jiraConfig.project} Project) - ${getPeriodLabel()} (${timeInterval === 'daily' ? 'Daily' : timeInterval === 'weekly' ? 'Weekly' : 'Monthly'})`
     
     return (
         <div className="chart-container p-6">
