@@ -10,6 +10,7 @@ A modular React application that provides analytics and visualizations for Jira 
 
 ## Features
 
+- **🎯 Time in Top 7 Tracking**: Tracks how long tickets have been prioritized (since first Priority Level assignment) rather than total age since creation
 - **Modular Component Architecture**: Clean separation of concerns with single-responsibility components
 - **Modern React Build System**: Vite for fast development and optimized production builds
 - **Configuration-Driven Dashboard**: Easy content modification through centralized configuration
@@ -23,6 +24,7 @@ A modular React application that provides analytics and visualizations for Jira 
 - **Persistent Credentials**: API tokens saved locally for convenience
 - **Smart Data Caching**: Preserves historical data and merges new information intelligently
 - **Developer Tools**: Built-in logging, debugging, and data export capabilities
+- **Comprehensive Testing**: 36 tests covering frontend, backend, and end-to-end functionality
 
 ## Quick Start
 
@@ -162,6 +164,7 @@ The app automatically detects and uses these Jira configurations:
   - Low: Priority Level ≥ 100
   - Unknown: No Priority Level set
 - **Source Labels**: Only labels prefixed with "src-" are analyzed
+- **Time in Top 7**: Tracks from when Priority Level is first assigned (`incomingDate`) rather than ticket creation date
 
 ## Data Storage
 
@@ -224,6 +227,23 @@ Edit `src/config/dashboardConfig.js` to:
 6. **Export data/logs** for troubleshooting
 
 ## Testing and Debugging
+
+### Automated Test Suite
+
+Run comprehensive tests covering Time in Top 7 functionality:
+```bash
+npm test                    # Run all 36 tests
+npm run test:watch         # Run tests in watch mode
+npm run test:coverage      # Run with coverage report
+npm test tests/frontend/   # Frontend component tests only
+npm test tests/integration/ # Integration tests only
+```
+
+**Test Coverage:**
+- Frontend components (Time in Top 7 UI updates)
+- Backend calculation logic (incoming date tracking)
+- End-to-end integration (data flow verification)
+- Edge cases and error handling
 
 ### Developer Panel Features
 

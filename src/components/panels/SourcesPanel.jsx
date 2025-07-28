@@ -51,8 +51,8 @@ export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays }) =
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {realData.averageAgeTimeSeries && (
                     <div>
-                        <h4 className="font-medium mb-3">Average Ticket Age Trends</h4>
-                        <p className="text-xs text-gray-500 mb-2">Shows how the average age of open tickets changes over time by priority level.</p>
+                        <h4 className="font-medium mb-3">Average Time in Top 7 Trends</h4>
+                        <p className="text-xs text-gray-500 mb-2">Shows how the average time tickets have been in Top 7 changes over time by priority level.</p>
                         <ResponsiveContainer width="100%" height={ageConfig.height}>
                             <LineChart data={realData.averageAgeTimeSeries}>
                                 <CartesianGrid strokeDasharray="3 3" />

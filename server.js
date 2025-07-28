@@ -191,6 +191,14 @@ const calculateAge = (createdDate) => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
+const calculateTimeInTop7 = (incomingDate, createdDate) => {
+  // Use incomingDate if available, otherwise fall back to created date
+  const startDate = incomingDate ? new Date(incomingDate) : new Date(createdDate);
+  const now = new Date();
+  const diffTime = Math.abs(now - startDate);
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
 const extractSourceLabels = (labels) => {
   return labels?.filter(label => label.startsWith('src-')) || [];
 };
@@ -573,6 +581,7 @@ app.post('/api/jira/current-tickets', async (req, res) => {
         priorityLevel: priorityLevel,
         priorityCategory: categorizePriority(priorityLevel),
         ageInDays: calculateAge(issue.fields.created),
+        timeInTop7Days: calculateTimeInTop7(priorityFlags.incomingDate, issue.fields.created),
         labels: issue.fields.labels || [],
         sourceLabels: extractSourceLabels(issue.fields.labels || []),
         
@@ -888,7 +897,7 @@ app.post('/api/jira/historical-data', async (req, res) => {
         if (categoryTickets.length === 0) return 0;
         
         const totalAge = categoryTickets.reduce((sum, ticket) => {
-          return sum + calculateAge(ticket.created);
+          return sum + calculateTimeInTop7(ticket.incomingDate, ticket.created);
         }, 0);
         
         return Math.round(totalAge / categoryTickets.length);

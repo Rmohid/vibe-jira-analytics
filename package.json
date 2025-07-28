@@ -10,7 +10,10 @@
     "start": "node server.js",
     "build": "vite build",
     "preview": "vite preview",
-    "serve": "npx serve ."
+    "serve": "npx serve .",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "axios": "^1.6.2",
@@ -21,9 +24,19 @@
     "recharts": "^2.15.4"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.28.0",
+    "@babel/preset-react": "^7.27.1",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^4.0.0",
+    "babel-jest": "^29.7.0",
     "concurrently": "^8.2.0",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "nodemon": "^3.0.2",
+    "supertest": "^7.1.4",
     "vite": "^4.3.9"
   },
   "keywords": [

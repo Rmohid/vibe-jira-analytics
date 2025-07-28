@@ -25,14 +25,14 @@ export const PriorityCardTooltip = ({ priority, tickets, maximumAge, jiraConfig 
             return true // total - include all categories
         })
         .sort((a, b) => {
-            // Sort all tickets by age (oldest first)
-            return (b.ageInDays || 0) - (a.ageInDays || 0)
+            // Sort all tickets by time in top 7 (oldest first)
+            return (b.timeInTop7Days || b.ageInDays || 0) - (a.timeInTop7Days || a.ageInDays || 0)
         })
     
     return (
         <div className="absolute z-50 bg-white p-3 border border-gray-300 rounded-lg shadow-lg min-w-[250px] pointer-events-none">
             <div className="mb-2">
-                <p className="font-semibold text-sm">Maximum Age: {maximumAge} days</p>
+                <p className="font-semibold text-sm">Maximum Time in Top 7: {maximumAge} days</p>
                 <p className="font-semibold text-sm">Total Count: {filteredTickets.length}</p>
             </div>
             {filteredTickets.length > 0 && (
@@ -42,8 +42,8 @@ export const PriorityCardTooltip = ({ priority, tickets, maximumAge, jiraConfig 
                     </p>
                     <div className="space-y-1">
                         {filteredTickets.slice(0, 3).map(ticket => {
-                            const ageInDays = ticket.ageInDays || 0
-                            const ageColor = ageInDays > 30 ? 'text-red-600' : ageInDays > 14 ? 'text-orange-600' : 'text-green-600'
+                            const timeInTop7 = ticket.timeInTop7Days || ticket.ageInDays || 0
+                            const ageColor = timeInTop7 > 30 ? 'text-red-600' : timeInTop7 > 14 ? 'text-orange-600' : 'text-green-600'
                             
                             return (
                                 <div key={ticket.key} className="text-xs">
@@ -63,7 +63,7 @@ export const PriorityCardTooltip = ({ priority, tickets, maximumAge, jiraConfig 
                                             </span>
                                         </div>
                                         <span className={`${ageColor} font-semibold ml-2 flex-shrink-0`}>
-                                            {ageInDays}d
+                                            {timeInTop7}d
                                         </span>
                                     </div>
                                 </div>

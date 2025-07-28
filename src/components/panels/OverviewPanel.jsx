@@ -70,7 +70,7 @@ export const OverviewPanel = ({ realData, jiraConfig, timePeriod, customDays }) 
         if (filteredTickets.length === 0) return 0
         
         const maxAge = filteredTickets.reduce((max, ticket) => {
-            const age = ticket.ageInDays || 0
+            const age = ticket.timeInTop7Days || ticket.ageInDays || 0
             return Math.max(max, age)
         }, 0)
         

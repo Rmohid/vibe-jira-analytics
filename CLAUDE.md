@@ -5,6 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 Jira Analytics Dashboard - A modular React application that provides analytics and visualizations for Jira tickets. The project uses Express.js backend with a modern React frontend built with Vite.
 
+### Key Feature: Time in Top 7 Tracking
+The dashboard tracks how long tickets have been in the "Top 7" (prioritized state) rather than their total age since creation. This provides more meaningful insights into how long high-priority work has been pending.
+
+**Implementation Details:**
+- Uses `incomingDate` (when Priority Level first assigned) instead of creation date
+- Calculates `timeInTop7Days` for each ticket
+- Falls back to creation date if no Priority Level transition exists
+- All UI displays "Time in Top 7" instead of generic "Age"
+
 ## Architecture
 
 ### Modular Component Structure
@@ -40,6 +49,162 @@ The application follows a clean, modular architecture optimized for Claude Code 
 - **Clear Dependencies**: Import/export statements make relationships obvious
 - **Reduced Complexity**: No more 2000+ line files to understand and navigate
 
+## Comprehensive Function Map
+
+### Backend (server.js)
+**Core Time in Top 7 Functions:**
+- `calculateTimeInTop7(incomingDate, createdDate)` - Calculates days since Priority Level assignment
+- `calculatePriorityFlags(transitions, currentPL, createdDate, ticketKey)` - Determines incoming/outgoing dates
+- `extractTransitionHistory(changelog)` - Parses Jira changelog for Priority Level transitions
+- `categorizePriority(priorityLevel)` - Categorizes priority levels (high/medium/low/unknown)
+
+**Data Processing:**
+- `batchJQLQuery(jira, jql, fields, batchSize, expand)` - Handles large dataset fetching
+- `getPriorityLevel(issue)` - Extracts Priority Level from issue fields
+- `extractSourceLabels(labels)` - Filters source labels (src-* prefixed)
+- `calculateAge(createdDate)` - Legacy age calculation (still used for fallback)
+
+**API Endpoints:**
+- `POST /api/jira/data` - Main data fetching and processing endpoint
+- `GET /api/jira/test` - API connectivity test
+- `POST /api/jira/config` - Configuration save/load
+
+**Time Series Generation:**
+- Average age calculation by priority category over time periods
+- Historical data aggregation with configurable intervals
+
+### Frontend Components
+
+#### Panel Components (`src/components/panels/`)
+**OverviewPanel.jsx:**
+- `calculateMaximumAge(priority)` - Finds max Time in Top 7 for priority category
+- Priority card rendering with hover tooltips
+- Real-time maximum time display
+
+**TicketsPanel.jsx:**
+- Ticket sorting by `timeInTop7Days` (descending)
+- "Time in Top 7" column header display
+- Formatted time display with "d" suffix
+- Priority Level color coding
+
+**SourcesPanel.jsx:**
+- "Average Time in Top 7 Trends" chart rendering
+- Incoming vs outgoing ticket flow analysis
+- Source label distribution and time series
+
+**TrendsPanel.jsx:**
+- Historical trend visualization
+- Time period selection handling
+
+#### Tooltip Components (`src/components/tooltips/`)
+**PriorityCardTooltip.jsx:**
+- "Maximum Time in Top 7" display
+- Top 3 oldest tickets by Time in Top 7
+- Color-coded time indicators (green ≤14d, orange ≤30d, red >30d)
+
+**CustomAgeTooltip.jsx:**
+- Generic chart tooltip for average time trends
+- Multi-priority display with color coding
+
+**SourceLabelsTooltip.jsx:**
+- Source label chart tooltips with ticket links
+- Clickable Jira issue links
+
+**CustomTooltip.jsx:**
+- General-purpose chart tooltip component
+
+#### UI Components (`src/components/ui/`)
+**ConfigPanel.jsx:**
+- Jira configuration form and validation
+- JQL query generation and testing
+- API token management
+
+**DevPanel.jsx:**
+- Developer debugging tools
+- Data export functionality
+- System status indicators
+
+**LogsPanel.jsx:**
+- Real-time logging display
+- Log categorization and filtering
+- Session persistence
+
+**ConnectionStatus.jsx:**
+- API connection status indicator
+- Real-time connectivity monitoring
+
+#### Core Components
+**DashboardRenderer.jsx:**
+- Dynamic component rendering based on configuration
+- Props passing to panel components
+- Section enable/disable logic
+
+**App.jsx:**
+- Main application state management
+- Time period and interval controls
+- Data fetching orchestration
+- Error boundary integration
+
+### Configuration and Utils
+
+#### Config (`src/config/`)
+**dashboardConfig.js:**
+- Dashboard section definitions and enable/disable flags
+- Chart color schemes and dimensions
+- Card styling configurations
+- Source label definitions and colors
+
+#### Utils (`src/utils/`)
+**api.js:**
+- `productionJiraAPI(endpoint, config, data)` - Production API calls
+- Error handling and fallback logic
+- Response data validation
+
+**helpers.js:**
+- `generateJQL(project, timePeriod, customDays)` - JQL query generation
+- `loadConfig()` - Configuration loading from localStorage
+- `checkChartsAvailable()` - Recharts availability verification
+
+**logger.js:**
+- `Logger.debug(category, message, data)` - Categorized logging
+- `Logger.error(category, message, error)` - Error logging with stack traces
+- `Logger.performance(operation, duration, metadata)` - Performance tracking
+- `Logger.state(component, state, action)` - State change logging
+- Session storage persistence and export functionality
+
+#### Hooks (`src/hooks/`)
+**useJiraData.js:**
+- Custom React hook for data management
+- API call orchestration and state management
+- Loading states and error handling
+- Data caching and synchronization
+
+### Testing (`tests/`)
+
+#### Frontend Tests (`tests/frontend/`)
+- **TicketsPanel.test.jsx** - Time in Top 7 UI testing, sorting, and display
+- **SourcesPanel.test.jsx** - Chart title updates and component rendering
+- **UILabels.test.jsx** - Comprehensive UI label verification
+
+#### Backend Tests (`tests/backend/`)
+- **timeInTop7.test.js** - Core calculation logic and priority categorization
+
+#### Integration Tests (`tests/integration/`)
+- **e2e.test.js** - End-to-end data flow verification
+- **simple-e2e.test.js** - Simplified integration testing
+
+### Key Function Locations for Time in Top 7
+
+| Function | File | Purpose |
+|----------|------|---------|
+| `calculateTimeInTop7` | server.js | Core time calculation |
+| `calculatePriorityFlags` | server.js | Incoming date detection |
+| Maximum time display | OverviewPanel.jsx | UI maximum time |
+| Time column header | TicketsPanel.jsx | "Time in Top 7" label |
+| Chart title | SourcesPanel.jsx | "Average Time in Top 7 Trends" |
+| Tooltip display | PriorityCardTooltip.jsx | "Maximum Time in Top 7" |
+| Test coverage | tests/ | Comprehensive validation |
+
 ## Common Development Commands
 
 ### Development
@@ -53,6 +218,10 @@ The application follows a clean, modular architecture optimized for Claude Code 
 - `npm run preview` - Preview the production build locally
 
 ### Testing & Validation
+- `npm test` - Run all tests (36 tests covering Time in Top 7 functionality)
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+- Tests cover frontend components, backend logic, and end-to-end integration
 The dashboard includes comprehensive debugging tools:
 
 #### Developer Panel (🔧 Dev button)
@@ -146,6 +315,13 @@ export const DASHBOARD_CONFIG = {
 - Medium: Priority Level < 100
 - Low: Priority Level >= 100
 - Unknown: No Priority Level set
+
+### Time in Top 7 Calculation
+The dashboard tracks when tickets first receive a Priority Level (enter the "Top 7"):
+- **Incoming Date**: Timestamp when Priority Level is first assigned (transition from null to any value)
+- **Time Calculation**: Days from incoming date to current date
+- **Fallback Logic**: Uses creation date if ticket was created with a Priority Level
+- **UI Display**: Shows as "Time in Top 7" with "d" suffix (e.g., "15d")
 
 ### Source Labels
 Only labels prefixed with "src-" are considered source labels for analytics.

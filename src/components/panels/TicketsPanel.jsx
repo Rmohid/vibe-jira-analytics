@@ -1,4 +1,5 @@
 import React from 'react'
+import { Logger } from '../../utils/logger'
 
 export const TicketsPanel = ({ realData, jiraConfig, timePeriod, customDays }) => {
     if (!realData || !realData.tickets) return null
@@ -13,24 +14,30 @@ export const TicketsPanel = ({ realData, jiraConfig, timePeriod, customDays }) =
         return ''
     }
     
-    // Sort tickets by PL (lowest first, null/undefined treated as highest), then by age (oldest first)
+    // Sort tickets by PL groups (high < 10, then by value), then by age (oldest first)
     const sortedTickets = [...realData.tickets].sort((a, b) => {
         // Get PL value from various possible locations
-        const plA = a.currentPriorityLevel?.value ?? a.priorityLevel ?? a.fields?.customfield_11129 ?? Number.MAX_VALUE
-        const plB = b.currentPriorityLevel?.value ?? b.priorityLevel ?? b.fields?.customfield_11129 ?? Number.MAX_VALUE
+        const plA = a.currentPriorityLevel?.value ?? a.priorityLevel ?? a.fields?.customfield_11129 ?? null
+        const plB = b.currentPriorityLevel?.value ?? b.priorityLevel ?? b.fields?.customfield_11129 ?? null
         
-        // Convert to numbers to ensure proper comparison
-        const numPlA = Number(plA)
-        const numPlB = Number(plB)
+        // Convert to numbers, treating null/undefined/"N/A" as highest priority (to sort last)
+        const numPlA = (plA === null || plA === 'N/A' || plA === undefined) ? Number.MAX_VALUE : Number(plA)
+        const numPlB = (plB === null || plB === 'N/A' || plB === undefined) ? Number.MAX_VALUE : Number(plB)
         
-        // First sort by PL (lowest first)
-        if (numPlA !== numPlB) {
-            return numPlA - numPlB
+        // Group PL values: < 10 are all treated as equivalent high priority
+        const groupA = numPlA < 10 ? 0 : numPlA
+        const groupB = numPlB < 10 ? 0 : numPlB
+        
+        // First sort by PL group
+        if (groupA !== groupB) {
+            return groupA - groupB
         }
         
-        // If PL is the same, sort by age (oldest first)
-        return (b.ageInDays || 0) - (a.ageInDays || 0)
+        // If in the same PL group, sort by time in top 7 (oldest first - higher time number first)
+        return (b.timeInTop7Days || 0) - (a.timeInTop7Days || 0)
     })
+    
+    
     
     return (
         <div className="chart-container p-6">
@@ -43,7 +50,7 @@ export const TicketsPanel = ({ realData, jiraConfig, timePeriod, customDays }) =
                             <th className="text-left py-2">Summary</th>
                             <th className="text-left py-2">Current Status</th>
                             <th className="text-left py-2">Current PL</th>
-                            <th className="text-left py-2">Age (Days)</th>
+                            <th className="text-left py-2">Time in Top 7</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -90,7 +97,7 @@ export const TicketsPanel = ({ realData, jiraConfig, timePeriod, customDays }) =
                                         )}
                                     </div>
                                 </td>
-                                <td className="py-2">{ticket.ageInDays}</td>
+                                <td className="py-2">{ticket.timeInTop7Days || ticket.ageInDays}d</td>
                             </tr>
                         ))}
                     </tbody>
