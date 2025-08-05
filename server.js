@@ -911,6 +911,118 @@ app.post('/api/jira/historical-data', async (req, res) => {
       };
     });
 
+    // Helper function to get priority level at a specific time
+    const getPriorityAtTime = (ticket, timestamp) => {
+      // Find the priority level at the time of resolution
+      let priorityAtTime = ticket.priorityLevel; // Start with current
+      let lastNonNullPriority = null; // Track last non-null priority
+      
+      // Look through priority transitions to find what it was at resolution time
+      if (ticket.priorityLevelTransitions && ticket.priorityLevelTransitions.length > 0) {
+        // Sort transitions by timestamp
+        const sortedTransitions = [...ticket.priorityLevelTransitions].sort((a, b) => 
+          new Date(a.timestamp) - new Date(b.timestamp)
+        );
+        
+        // Find the priority at resolution time, tracking last non-null value
+        for (const transition of sortedTransitions) {
+          if (new Date(transition.timestamp) <= new Date(timestamp)) {
+            priorityAtTime = transition.toValue;
+            // Keep track of last non-null priority
+            if (transition.toValue !== null) {
+              lastNonNullPriority = transition.toValue;
+            }
+          } else {
+            break;
+          }
+        }
+        
+        // If priority was null at resolution but we have a previous non-null value, use it
+        // This handles tickets that had their priority cleared before being closed
+        if (priorityAtTime === null && lastNonNullPriority !== null) {
+          priorityAtTime = lastNonNullPriority;
+        }
+        
+        // If still null but there was a fromValue in first transition
+        if (priorityAtTime === null && sortedTransitions.length > 0 && sortedTransitions[0].fromValue !== null) {
+          priorityAtTime = sortedTransitions[0].fromValue;
+        }
+      }
+      
+      return priorityAtTime;
+    };
+
+    // First pass: Add resolution priority to all tickets that have been resolved
+    tickets.forEach(ticket => {
+      // Find if ticket was ever resolved
+      const resolutionTransition = ticket.statusTransitions?.find(transition => {
+        const isResolved = transition.toValue && (
+          transition.toValue.toLowerCase().includes('done') || 
+          transition.toValue.toLowerCase().includes('closed') ||
+          transition.toValue.toLowerCase().includes('resolved') ||
+          transition.toValue.toLowerCase().includes('complete')
+        );
+        return isResolved;
+      });
+      
+      if (resolutionTransition) {
+        // Get the priority level at the time of resolution
+        const priorityAtResolution = getPriorityAtTime(ticket, resolutionTransition.timestamp);
+        const priorityCategory = categorizePriority(priorityAtResolution);
+        
+        // Add these fields to the ticket for later use
+        ticket.priorityAtResolution = priorityAtResolution;
+        ticket.priorityCategoryAtResolution = priorityCategory;
+      }
+    });
+
+    // Generate fixed tickets time series - tickets that transitioned to Done/Closed status
+    const fixedTicketsTimeSeries = timeSeries.map(period => {
+      const periodDate = new Date(period.date);
+      
+      // Count tickets that were resolved in this period
+      const fixedCounts = {
+        high: 0,
+        medium: 0,
+        low: 0,
+        unknown: 0,
+        total: 0
+      };
+      
+      // Check all tickets to see if they were resolved in this period
+      tickets.forEach(ticket => {
+        // Look for status transitions to Done or Closed
+        const resolutionTransition = ticket.statusTransitions?.find(transition => {
+          const transitionDate = new Date(transition.timestamp);
+          const isInPeriod = transitionDate >= periodDate && transitionDate < new Date(periodDate.getTime() + (timeInterval === 'daily' ? 86400000 : timeInterval === 'weekly' ? 604800000 : 2592000000));
+          const isResolved = transition.toValue && (
+            transition.toValue.toLowerCase().includes('done') || 
+            transition.toValue.toLowerCase().includes('closed') ||
+            transition.toValue.toLowerCase().includes('resolved') ||
+            transition.toValue.toLowerCase().includes('complete')
+          );
+          return isInPeriod && isResolved;
+        });
+        
+        if (resolutionTransition) {
+          // Use the pre-calculated priority category at resolution
+          const priorityCategory = ticket.priorityCategoryAtResolution || 'unknown';
+          
+          fixedCounts[priorityCategory]++;
+          fixedCounts.total++;
+        }
+      });
+      
+      return {
+        date: period.date,
+        high: fixedCounts.high,
+        medium: fixedCounts.medium,
+        low: fixedCounts.low,
+        unknown: fixedCounts.unknown,
+        total: fixedCounts.total
+      };
+    });
+
     // Calculate source label distribution from all tickets
     const sourceLabelsMap = {};
     const colors = {
@@ -968,6 +1080,8 @@ app.post('/api/jira/historical-data', async (req, res) => {
       timeSeries,
       sourceLabelsTimeSeries,
       averageAgeTimeSeries,
+      fixedTicketsTimeSeries,
+      tickets, // Include tickets array for tooltip functionality
       sourceLabels,
       allSourceLabels: Array.from(allSourceLabels), // List of all source label keys
       totalTickets: tickets.length,

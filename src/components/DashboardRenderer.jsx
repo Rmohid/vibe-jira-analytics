@@ -3,6 +3,7 @@ import { OverviewPanel } from './panels/OverviewPanel'
 import { TrendsPanel } from './panels/TrendsPanel'
 import { SourcesPanel } from './panels/SourcesPanel'
 import { TicketsPanel } from './panels/TicketsPanel'
+import { FixedTicketsPanel } from './panels/FixedTicketsPanel'
 
 // Dynamic Dashboard Renderer
 export const DashboardRenderer = ({ sections, realData, jiraConfig, timePeriod, customDays, timeInterval, startDate, endDate }) => {
@@ -20,6 +21,8 @@ export const DashboardRenderer = ({ sections, realData, jiraConfig, timePeriod, 
                 return <SourcesPanel key={section.id} {...commonProps} />
             case 'TicketsPanel':
                 return <TicketsPanel key={section.id} {...commonProps} />
+            case 'FixedTicketsPanel':
+                return <FixedTicketsPanel key={section.id} {...commonProps} />
             default:
                 return null
         }

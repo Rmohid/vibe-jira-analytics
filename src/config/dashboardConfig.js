@@ -3,6 +3,7 @@ export const DASHBOARD_CONFIG = {
     sections: [
         { id: 'overview', title: 'Current Status Cards', component: 'OverviewPanel', enabled: true },
         { id: 'trends', title: 'Historical Trend Chart', component: 'TrendsPanel', enabled: true },
+        { id: 'fixed', title: 'Fixed Tickets', component: 'FixedTicketsPanel', enabled: true },
         { id: 'sources', title: 'Source Label Analysis', component: 'SourcesPanel', enabled: true },
         { id: 'tickets', title: 'Recent Tickets Table', component: 'TicketsPanel', enabled: true }
     ],
@@ -29,6 +30,16 @@ export const DASHBOARD_CONFIG = {
                 highAvgAge: '#ef4444',
                 mediumAvgAge: '#f59e0b',
                 lowAvgAge: '#3b82f6'
+            }
+        },
+        fixedTickets: {
+            type: 'bar',
+            height: 300,
+            colors: {
+                high: '#ef4444',
+                medium: '#f59e0b',
+                low: '#3b82f6',
+                unknown: '#999999'
             }
         }
     },

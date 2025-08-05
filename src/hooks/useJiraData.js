@@ -27,11 +27,13 @@ export const useJiraData = (jiraConfig, timePeriod, timeInterval, customDays, st
 
             setRealData({
                 currentCounts: currentData.counts,
-                tickets: currentData.tickets,
+                tickets: historicalData.tickets || currentData.tickets, // Use historical tickets if available
                 historicalTrend: historicalData.timeSeries,
                 sourceLabelsTimeSeries: historicalData.sourceLabelsTimeSeries,
                 averageAgeTimeSeries: historicalData.averageAgeTimeSeries,
+                fixedTicketsTimeSeries: historicalData.fixedTicketsTimeSeries,
                 sourceLabels: historicalData.sourceLabels,
+                timeInterval: historicalData.timeInterval || 'daily', // Pass timeInterval for tooltip
                 lastUpdated: new Date().toISOString()
             })
 
