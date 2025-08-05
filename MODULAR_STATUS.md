@@ -135,6 +135,34 @@ npm start                # Start production server
 - **PriorityCardTooltip**: "Maximum Age" → "Maximum Time in Top 7"
 - **OverviewPanel**: Uses new time calculation for maximum time display
 
+## ✅ COMPLETED - Fixed Tickets Logic Correction
+
+### Phase 6 - Priority Level-Based Fixed Tickets ✅
+**Critical Business Logic Fix**: Corrected Fixed Tickets detection to use Priority Level changes instead of Jira status transitions.
+
+#### The Problem:
+- **Previous approach**: Looking for status transitions to "Done", "Closed", "Resolved" etc.
+- **Issue**: Missed majority of actually fixed tickets, severely undercounting (~0.1 vs expected ~0.4 per day)
+- **Wrong assumption**: That Jira status changes indicate when work leaves the active backlog
+
+#### The Solution:
+- **Correct approach**: Priority Level-based detection using existing `isOutgoing` and `outgoingDate` flags
+- **Business logic**: Tickets are "fixed" when they leave Top 7 prioritized backlog (PL > 99 or PL cleared)
+- **Two valid scenarios**: 
+  1. Completed work (PL cleared/null)
+  2. Deprioritized work (PL > 99)
+
+#### Implementation Changes:
+- **Leverages existing logic**: Uses `calculatePriorityFlags()` results instead of creating new status detection
+- **Simplified and accurate**: Removed complex status matching patterns, uses proven PL transition logic
+- **Enhanced debugging**: Shows reasons for fixed classification (PL cleared vs PL > 99)
+- **Updated documentation**: All MD files now reflect correct Priority Level-based approach
+
+#### Results:
+- **Accurate counting**: Now captures all tickets leaving the prioritized backlog
+- **Business alignment**: Matches the Top 7 workflow where Priority Level manages active work
+- **Better metrics**: Should now show expected ~0.4 tickets fixed per day rate
+
 ## Migration Complete
 
 The refactoring is **100% complete** and ready for production use. All functionality from the original monolithic application has been preserved while gaining significant maintainability and development experience improvements. The Time in Top 7 feature provides more meaningful insights into ticket prioritization duration.
@@ -147,6 +175,7 @@ The refactoring is **100% complete** and ready for production use. All functiona
 5. ✅ **Documentation updated** - README and CLAUDE.md reflect new architecture
 6. ✅ **Claude Code optimized** - Modular structure perfect for AI-assisted development
 7. ✅ **Time in Top 7 implementation** - More meaningful priority tracking
-8. ✅ **Comprehensive testing** - 36 tests ensuring reliability and correctness
+8. ✅ **Fixed Tickets logic correction** - Priority Level-based (not status-based) for accurate business metrics
+9. ✅ **Comprehensive testing** - 36 tests ensuring reliability and correctness
 
 The application is now significantly easier to maintain, extend, and debug, with particular optimization for Claude Code development workflows.

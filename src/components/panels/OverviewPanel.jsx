@@ -74,8 +74,26 @@ export const OverviewPanel = ({ realData, jiraConfig, timePeriod, customDays, st
         
         if (filteredTickets.length === 0) return 0
         
-        const maxAge = filteredTickets.reduce((max, ticket) => {
+        const maxAge = filteredTickets.reduce((max, ticket, index) => {
             const age = ticket.timeInTop7Days || ticket.ageInDays || 0
+            
+            // Debug logging for first few tickets of each priority
+            if (index < 2) {
+                console.log(`[OverviewPanel] ${priority} ticket ${ticket.key}:`, {
+                    timeInTop7Days: ticket.timeInTop7Days,
+                    ageInDays: ticket.ageInDays,
+                    calculatedAge: age,
+                    ticketKeys: Object.keys(ticket),
+                    sampleProps: {
+                        key: ticket.key,
+                        summary: ticket.summary?.substring(0, 30),
+                        created: ticket.created,
+                        priorityLevel: ticket.priorityLevel,
+                        status: ticket.status
+                    }
+                });
+            }
+            
             return Math.max(max, age)
         }, 0)
         

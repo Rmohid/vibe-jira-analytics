@@ -3,6 +3,7 @@ import { BarChart, LineChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { SourceLabelsTooltip } from '../tooltips/SourceLabelsTooltip'
 import { CustomAgeTooltip } from '../tooltips/CustomAgeTooltip'
 import { DASHBOARD_CONFIG } from '../../config/dashboardConfig'
+import { calculateDaysFromTimePeriod } from '../../utils/helpers'
 
 export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, startDate, endDate }) => {
     if (!realData) return null
@@ -84,7 +85,7 @@ export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, sta
                             const today = new Date()
                             
                             // Calculate number of days based on time period selection
-                            const days = timePeriod === 'custom' ? customDays : parseInt(timePeriod.replace('d', ''))
+                            const days = calculateDaysFromTimePeriod(timePeriod, customDays, startDate, endDate)
                             
                             // Initialize selected time period with zero values
                             for (let i = days - 1; i >= 0; i--) {
@@ -198,7 +199,7 @@ export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, sta
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
                         {(() => {
                             // Calculate number of days based on current time period selection
-                            const days = timePeriod === 'custom' ? customDays : parseInt(timePeriod.replace('d', ''))
+                            const days = calculateDaysFromTimePeriod(timePeriod, customDays, startDate, endDate)
                             
                             const currentPeriodStats = (() => {
                                 let totalIncoming = 0

@@ -1,12 +1,14 @@
 import React from 'react'
-import { generateJQL } from '../../utils/helpers'
+import { generateJQL, calculateDaysFromTimePeriod } from '../../utils/helpers'
 
 export const ConfigPanel = ({ 
     showConfig, 
     jiraConfig, 
     setJiraConfig, 
     timePeriod, 
-    customDays 
+    customDays,
+    startDate,
+    endDate
 }) => {
     if (!showConfig) return null
 
@@ -22,11 +24,14 @@ export const ConfigPanel = ({
         },
         {
             name: 'Current Time Period',
-            query: () => generateJQL(jiraConfig.project, timePeriod, customDays)
+            query: () => generateJQL(jiraConfig.project, timePeriod, customDays, startDate, endDate)
         },
         {
             name: 'Source Label Analysis',
-            query: () => `project = ${jiraConfig.project} AND labels in ("src-bug-fix", "src-new-feature", "src-tech-debt", "src-maintenance", "src-research", "src-integration", "src-golive-critical", "src-unknown", "unplanned") AND created >= -${timePeriod === 'custom' ? customDays : timePeriod.replace('d', '')}d`
+            query: () => {
+                const days = calculateDaysFromTimePeriod(timePeriod, customDays, startDate, endDate)
+                return `project = ${jiraConfig.project} AND labels in ("src-bug-fix", "src-new-feature", "src-tech-debt", "src-maintenance", "src-research", "src-integration", "src-golive-critical", "src-unknown", "unplanned") AND created >= -${days}d`
+            }
         },
         {
             name: 'All Active Tickets',

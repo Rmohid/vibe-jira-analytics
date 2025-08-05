@@ -20,14 +20,45 @@ export const useJiraData = (jiraConfig, timePeriod, timeInterval, customDays, st
         setError(null)
 
         try {
+            console.log('[useJiraData] Starting API calls...');
+            
             const [currentData, historicalData] = await Promise.all([
                 productionJiraAPI('current-tickets', { ...jiraConfig, timePeriod, timeInterval, customDays, startDate, endDate }),
                 productionJiraAPI('historical-data', { ...jiraConfig, timePeriod, timeInterval, startDate, endDate })
             ])
 
+            console.log('[useJiraData] API responses received:', {
+                currentDataTickets: currentData.tickets?.length || 0,
+                historicalDataTickets: historicalData.tickets?.length || 0,
+                firstCurrentTicket: currentData.tickets?.[0] ? {
+                    key: currentData.tickets[0].key,
+                    timeInTop7Days: currentData.tickets[0].timeInTop7Days,
+                    ageInDays: currentData.tickets[0].ageInDays
+                } : 'no tickets',
+                firstHistoricalTicket: historicalData.tickets?.[0] ? {
+                    key: historicalData.tickets[0].key,
+                    timeInTop7Days: historicalData.tickets[0].timeInTop7Days,
+                    ageInDays: historicalData.tickets[0].ageInDays
+                } : 'no tickets'
+            });
+
+            const finalTickets = historicalData.tickets || currentData.tickets;
+            console.log('[useJiraData] Using tickets from:', historicalData.tickets ? 'historical' : 'current', 'count:', finalTickets?.length || 0);
+            
+            if (finalTickets && finalTickets.length > 0) {
+                console.log('[useJiraData] First 3 tickets timeInTop7Days:', finalTickets.slice(0, 3).map(t => ({
+                    key: t.key,
+                    timeInTop7Days: t.timeInTop7Days,
+                    ageInDays: t.ageInDays,
+                    allProps: Object.keys(t)
+                })));
+                
+                console.log('[useJiraData] Raw first ticket from API:', finalTickets[0]);
+            }
+
             setRealData({
                 currentCounts: currentData.counts,
-                tickets: historicalData.tickets || currentData.tickets, // Use historical tickets if available
+                tickets: currentData.tickets, // Always use current tickets for display (they have timeInTop7Days)
                 historicalTrend: historicalData.timeSeries,
                 sourceLabelsTimeSeries: historicalData.sourceLabelsTimeSeries,
                 averageAgeTimeSeries: historicalData.averageAgeTimeSeries,

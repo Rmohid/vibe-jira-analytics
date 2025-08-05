@@ -64,6 +64,12 @@ The application follows a clean, modular architecture optimized for Claude Code 
 - `extractSourceLabels(labels)` - Filters source labels (src-* prefixed)
 - `calculateAge(createdDate)` - Legacy age calculation (still used for fallback)
 
+**Fixed Tickets Processing (Priority Level-Based):**
+- Fixed tickets identified when `ticket.isOutgoing` is true and `ticket.outgoingDate` is set
+- Time series generation checks if `outgoingDate` falls within each period
+- Counts tickets that left Top 7 (PL > 99 or PL cleared) during the time period
+- **NOT based on status transitions** - uses existing Priority Level transition logic
+
 **API Endpoints:**
 - `POST /api/jira/data` - Main data fetching and processing endpoint
 - `GET /api/jira/test` - API connectivity test
@@ -95,6 +101,12 @@ The application follows a clean, modular architecture optimized for Claude Code 
 **TrendsPanel.jsx:**
 - Historical trend visualization
 - Time period selection handling
+
+**FixedTicketsPanel.jsx:**
+- Displays tickets that left Top 7 prioritized backlog over time
+- Groups by source labels in stacked bar chart format
+- Shows Priority Level-based fixed tickets (PL > 99 or PL cleared)
+- **NOT based on Jira status changes** - uses outgoing Priority Level transitions
 
 #### Tooltip Components (`src/components/tooltips/`)
 **PriorityCardTooltip.jsx:**
@@ -198,12 +210,24 @@ The application follows a clean, modular architecture optimized for Claude Code 
 | Function | File | Purpose |
 |----------|------|---------|
 | `calculateTimeInTop7` | server.js | Core time calculation |
-| `calculatePriorityFlags` | server.js | Incoming date detection |
+| `calculatePriorityFlags` | server.js | Incoming/outgoing date detection |
 | Maximum time display | OverviewPanel.jsx | UI maximum time |
 | Time column header | TicketsPanel.jsx | "Time in Top 7" label |
 | Chart title | SourcesPanel.jsx | "Average Time in Top 7 Trends" |
 | Tooltip display | PriorityCardTooltip.jsx | "Maximum Time in Top 7" |
 | Test coverage | tests/ | Comprehensive validation |
+
+### Key Function Locations for Fixed Tickets (Priority Level-Based)
+
+| Function | File | Purpose |
+|----------|------|---------|
+| `calculatePriorityFlags` | server.js | Sets `isOutgoing` and `outgoingDate` flags |
+| Fixed Tickets time series | server.js | Uses `isOutgoing` and `outgoingDate` for counting |
+| FixedTicketsPanel | FixedTicketsPanel.jsx | Displays PL-based fixed tickets chart |
+| Fixed Tickets description | FixedTicketsPanel.jsx | "Left Top 7 prioritized backlog" |
+| Debug logging | server.js | Shows PL reasons (cleared vs >99) |
+
+**CRITICAL**: Fixed Tickets logic is **Priority Level-based**, not status-based. Use `ticket.isOutgoing` and `ticket.outgoingDate`, never status transitions.
 
 ## Common Development Commands
 
@@ -322,6 +346,28 @@ The dashboard tracks when tickets first receive a Priority Level (enter the "Top
 - **Time Calculation**: Days from incoming date to current date
 - **Fallback Logic**: Uses creation date if ticket was created with a Priority Level
 - **UI Display**: Shows as "Time in Top 7" with "d" suffix (e.g., "15d")
+
+### Fixed Tickets Logic (Priority Level-Based)
+**IMPORTANT**: Tickets are considered "fixed" when they **leave the Top 7 prioritized backlog**, NOT when they change to "Done" or "Closed" status.
+
+#### How Fixed Tickets Are Determined:
+A ticket is "fixed" when its Priority Level changes such that it leaves the Top 7:
+1. **Priority Level > 99** (deprioritized - moved out of active backlog)
+2. **Priority Level cleared/null** (completed - work finished)
+
+#### Implementation Details:
+- **Uses existing `isOutgoing` and `outgoingDate` flags** from `calculatePriorityFlags()`
+- **NOT based on Jira status transitions** (Done, Closed, Resolved, etc.)
+- **Aligns with Top 7 business logic**: Active backlog management via Priority Level
+- **Two valid "fixed" scenarios**:
+  - **Completed work**: PL cleared (null) - ticket truly finished
+  - **Deprioritized work**: PL > 99 - ticket moved out of active scope
+
+#### Why This Logic Is Correct:
+- Tickets can be "Done" in Jira but still have active Priority Levels (not fixed in business terms)
+- Tickets can be resolved via other means (cancelled, moved, etc.) without status changes
+- The business question is: "When does work leave our active prioritized backlog?"
+- Answer: When Priority Level > 99 or Priority Level is cleared
 
 ### Source Labels
 Only labels prefixed with "src-" are considered source labels for analytics.

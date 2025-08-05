@@ -11,6 +11,7 @@ A modular React application that provides analytics and visualizations for Jira 
 ## Features
 
 - **🎯 Time in Top 7 Tracking**: Tracks how long tickets have been prioritized (since first Priority Level assignment) rather than total age since creation
+- **📊 Fixed Tickets Analysis**: Priority Level-based tracking of tickets leaving the Top 7 prioritized backlog (PL > 99 or cleared)
 - **Modular Component Architecture**: Clean separation of concerns with single-responsibility components
 - **Modern React Build System**: Vite for fast development and optimized production builds
 - **Configuration-Driven Dashboard**: Easy content modification through centralized configuration
@@ -165,6 +166,10 @@ The app automatically detects and uses these Jira configurations:
   - Unknown: No Priority Level set
 - **Source Labels**: Only labels prefixed with "src-" are analyzed
 - **Time in Top 7**: Tracks from when Priority Level is first assigned (`incomingDate`) rather than ticket creation date
+- **Fixed Tickets Logic**: Priority Level-based (PL > 99 or cleared), NOT status-based (Done/Closed)
+  - Uses `isOutgoing` and `outgoingDate` flags from existing Priority Level transition logic
+  - Tracks tickets leaving the Top 7 prioritized backlog, not Jira status changes
+  - Two valid scenarios: completed work (PL cleared) or deprioritized work (PL > 99)
 
 ## Data Storage
 

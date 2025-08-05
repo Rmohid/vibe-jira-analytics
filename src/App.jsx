@@ -227,6 +227,8 @@ const JiraAnalyticsApp = () => {
                         setJiraConfig={setJiraConfig}
                         timePeriod={timePeriod}
                         customDays={customDays}
+                        startDate={startDate}
+                        endDate={endDate}
                     />
 
                     {error && (

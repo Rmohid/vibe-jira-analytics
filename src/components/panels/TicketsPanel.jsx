@@ -102,7 +102,25 @@ export const TicketsPanel = ({ realData, jiraConfig, timePeriod, customDays, sta
                                         )}
                                     </div>
                                 </td>
-                                <td className="py-2">{ticket.timeInTop7Days || ticket.ageInDays}d</td>
+                                <td className="py-2">
+                                    {(() => {
+                                        const timeInTop7 = ticket.timeInTop7Days;
+                                        const ageInDays = ticket.ageInDays;
+                                        const displayValue = timeInTop7 || ageInDays;
+                                        
+                                        // Debug logging
+                                        if (index === 0) { // Only log for first ticket to avoid spam
+                                            console.log(`[TicketsPanel] First ticket ${ticket.key}:`, {
+                                                timeInTop7Days: timeInTop7,
+                                                ageInDays: ageInDays,
+                                                displayValue: displayValue,
+                                                ticketKeys: Object.keys(ticket)
+                                            });
+                                        }
+                                        
+                                        return `${displayValue}d`;
+                                    })()}
+                                </td>
                             </tr>
                         ))}
                     </tbody>

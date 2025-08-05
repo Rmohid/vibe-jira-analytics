@@ -403,6 +403,119 @@ const aggregateByInterval = (tickets, interval) => {
   return Object.values(aggregated).sort((a, b) => new Date(a.date) - new Date(b.date));
 };
 
+const generateTimeSeriesForPeriod = (tickets, interval, timePeriod, customDays, startDate, endDate) => {
+  const aggregated = {};
+  
+  // First, determine the date range for the time series
+  let startDateObj, endDateObj;
+  
+  if (timePeriod === 'dateRange' && startDate && endDate) {
+    startDateObj = new Date(startDate);
+    endDateObj = new Date(endDate);
+  } else {
+    // Calculate days from time period
+    let days;
+    if (timePeriod === 'custom') {
+      days = customDays || 30;
+    } else {
+      const match = timePeriod?.match(/^(\d+)d$/);
+      days = match ? parseInt(match[1]) : 30;
+    }
+    
+    endDateObj = new Date();
+    startDateObj = new Date();
+    startDateObj.setDate(endDateObj.getDate() - days + 1); // +1 to include both start and end dates
+  }
+  
+  // Generate all date keys in the range based on interval
+  const generateDateKeys = (start, end, interval) => {
+    const keys = [];
+    const current = new Date(start);
+    
+    while (current <= end) {
+      let key;
+      const dateStr = current.toISOString().split('T')[0];
+      
+      switch(interval) {
+        case 'weekly':
+          key = getWeekStart(dateStr);
+          break;
+        case 'monthly':
+          key = getMonthStart(dateStr);
+          break;
+        case 'daily':
+        default:
+          key = dateStr;
+          break;
+      }
+      
+      if (!keys.includes(key)) {
+        keys.push(key);
+      }
+      
+      // Move to next period
+      switch(interval) {
+        case 'weekly':
+          current.setDate(current.getDate() + 7);
+          break;
+        case 'monthly':
+          current.setMonth(current.getMonth() + 1);
+          break;
+        case 'daily':
+        default:
+          current.setDate(current.getDate() + 1);
+          break;
+      }
+    }
+    
+    return keys;
+  };
+  
+  // Initialize all date keys with zero values
+  const dateKeys = generateDateKeys(startDateObj, endDateObj, interval);
+  dateKeys.forEach(key => {
+    aggregated[key] = {
+      date: key,
+      high: 0,
+      medium: 0,
+      low: 0,
+      unknown: 0,
+      total: 0,
+      tickets: []
+    };
+  });
+  
+  // Now aggregate the actual ticket data
+  tickets.forEach(ticket => {
+    let key;
+    const date = ticket.created.split('T')[0];
+    
+    switch(interval) {
+      case 'weekly':
+        key = getWeekStart(date);
+        break;
+      case 'monthly':
+        key = getMonthStart(date);
+        break;
+      case 'daily':
+      default:
+        key = date;
+        break;
+    }
+    
+    // Only include tickets that fall within our date range
+    if (aggregated[key]) {
+      // Count by priority category
+      aggregated[key][ticket.priorityCategory]++;
+      aggregated[key].total++;
+      aggregated[key].tickets.push(ticket);
+    }
+  });
+  
+  // Convert to array and sort by date
+  return Object.values(aggregated).sort((a, b) => new Date(a.date) - new Date(b.date));
+};
+
 // Test Jira connection
 app.post('/api/jira/test-connection', async (req, res) => {
   try {
@@ -765,27 +878,59 @@ app.post('/api/jira/historical-data', async (req, res) => {
     
     const jira = createJiraClient({ baseUrl, email, apiToken });
     
-    // Use custom JQL for historical data, or create a historical version of the query
+    // Generate historical JQL based on the time period parameters
     let historicalJQL;
+    
+    // For Fixed Tickets analysis, we need a broader date range to catch tickets that were
+    // resolved recently but created earlier. We'll expand the range and filter during processing.
+    let dateFilter;
+    let expandedDays;
+    
+    if (timePeriod === 'dateRange' && startDate && endDate) {
+      // For date ranges, expand by 6 months to catch older tickets that might have been resolved in the range
+      const sixMonthsEarlier = new Date(startDate);
+      sixMonthsEarlier.setMonth(sixMonthsEarlier.getMonth() - 6);
+      const expandedStartDate = sixMonthsEarlier.toISOString().split('T')[0];
+      dateFilter = `created >= "${expandedStartDate}"`;
+    } else {
+      // Calculate days from time period and expand significantly for Fixed Tickets analysis
+      let days;
+      if (timePeriod === 'custom') {
+        days = customDays || 30;
+      } else {
+        // Extract days from formats like "7d", "30d", "90d", etc.
+        const match = timePeriod?.match(/^(\d+)d$/);
+        days = match ? parseInt(match[1]) : 30;
+      }
+      
+      // Expand the range to catch tickets created earlier but resolved in the target period
+      // For Fixed Tickets analysis, we need to look back much further
+      expandedDays = Math.max(days * 4, 180); // At least 4x the period or 180 days, whichever is larger
+      dateFilter = `created >= startOfDay(-${expandedDays}d)`;
+    }
+    
     if (jqlQuery) {
-      // Modify the query to get historical data (extend date range for trends)
-      // Fix JQL date syntax - use startOfDay() function and handle various spacing patterns
-      historicalJQL = jqlQuery.replace(/created\s*>=\s*-\d+d/g, 'created >= startOfDay(-90d)');
-      historicalJQL = historicalJQL.replace(/updated\s*>=\s*-\d+d/g, 'updated >= startOfDay(-90d)');
-      if (!historicalJQL.includes('created >=') && !historicalJQL.includes('updated >=')) {
-        // Insert the date filter before any ORDER BY clause to avoid syntax errors
-        const orderByIndex = historicalJQL.toUpperCase().indexOf('ORDER BY');
-        if (orderByIndex !== -1) {
-          historicalJQL = historicalJQL.substring(0, orderByIndex).trim() + 
-                         ' AND created >= startOfDay(-90d) ' + 
-                         historicalJQL.substring(orderByIndex);
-        } else {
-          historicalJQL += ' AND created >= startOfDay(-90d)';
-        }
+      // Modify the query to use the expanded date range for better Fixed Tickets analysis
+      // Remove existing date filters and replace with our calculated one
+      historicalJQL = jqlQuery.replace(/created\s*>=\s*[^A-Z]*(?=\s*(AND|OR|ORDER|$))/gi, '');
+      historicalJQL = historicalJQL.replace(/updated\s*>=\s*[^A-Z]*(?=\s*(AND|OR|ORDER|$))/gi, '');
+      
+      // Clean up any double ANDs that might result from removal
+      historicalJQL = historicalJQL.replace(/\s+AND\s+AND\s+/gi, ' AND ');
+      historicalJQL = historicalJQL.replace(/\s+AND\s*ORDER\s+BY/gi, ' ORDER BY');
+      
+      // Insert the date filter before any ORDER BY clause
+      const orderByIndex = historicalJQL.toUpperCase().indexOf('ORDER BY');
+      if (orderByIndex !== -1) {
+        historicalJQL = historicalJQL.substring(0, orderByIndex).trim() + 
+                       ` AND ${dateFilter} ` + 
+                       historicalJQL.substring(orderByIndex);
+      } else {
+        historicalJQL += ` AND ${dateFilter}`;
       }
     } else {
-      // Default historical query
-      historicalJQL = `project = ${project} AND (cf[11129] > 0 or labels = "unplanned") AND created >= startOfDay(-90d) ORDER BY created ASC`;
+      // Default historical query using the expanded time period for Fixed Tickets analysis
+      historicalJQL = `project = ${project} AND (cf[11129] > 0 or labels = "unplanned") AND ${dateFilter} ORDER BY created ASC`;
     }
     
     console.log(`Executing historical JQL: ${historicalJQL}`);
@@ -845,8 +990,8 @@ app.post('/api/jira/historical-data', async (req, res) => {
       };
     });
 
-    // Use the aggregation helper based on the selected interval
-    const timeSeries = aggregateByInterval(tickets, timeInterval || 'daily');
+    // Use the time series generation helper for the selected interval and period
+    const timeSeries = generateTimeSeriesForPeriod(tickets, timeInterval || 'daily', timePeriod, customDays, startDate, endDate);
 
     // First, collect all unique source labels from ALL tickets (not just current period tickets)
     const allSourceLabels = new Set();
@@ -952,76 +1097,123 @@ app.post('/api/jira/historical-data', async (req, res) => {
       return priorityAtTime;
     };
 
-    // First pass: Add resolution priority to all tickets that have been resolved
+    // Priority Level-based Fixed Tickets Logic:
+    // A ticket is "fixed" when it leaves the Top 7 (Priority Level > 99 or PL cleared)
+    // This is already calculated in the isOutgoing flag and outgoingDate field
+    
+    console.log('Analyzing tickets for PL-based Fixed Tickets detection...');
+    let totalOutgoingTickets = 0;
     tickets.forEach(ticket => {
-      // Find if ticket was ever resolved
-      const resolutionTransition = ticket.statusTransitions?.find(transition => {
-        const isResolved = transition.toValue && (
-          transition.toValue.toLowerCase().includes('done') || 
-          transition.toValue.toLowerCase().includes('closed') ||
-          transition.toValue.toLowerCase().includes('resolved') ||
-          transition.toValue.toLowerCase().includes('complete')
-        );
-        return isResolved;
-      });
-      
-      if (resolutionTransition) {
-        // Get the priority level at the time of resolution
-        const priorityAtResolution = getPriorityAtTime(ticket, resolutionTransition.timestamp);
-        const priorityCategory = categorizePriority(priorityAtResolution);
+      if (ticket.isOutgoing && ticket.outgoingDate) {
+        totalOutgoingTickets++;
+        // Get the priority level at the time it left Top 7
+        const priorityAtOutgoing = getPriorityAtTime(ticket, ticket.outgoingDate);
+        const priorityCategory = categorizePriority(priorityAtOutgoing);
         
         // Add these fields to the ticket for later use
-        ticket.priorityAtResolution = priorityAtResolution;
-        ticket.priorityCategoryAtResolution = priorityCategory;
+        ticket.priorityAtOutgoing = priorityAtOutgoing;
+        ticket.priorityCategoryAtOutgoing = priorityCategory;
       }
     });
+    
+    console.log(`Found ${totalOutgoingTickets} tickets that left Top 7 (outgoing/fixed tickets)`);
 
-    // Generate fixed tickets time series - tickets that transitioned to Done/Closed status
+    // Generate fixed tickets time series - tickets that left Top 7 (PL > 99 or PL cleared)
     const fixedTicketsTimeSeries = timeSeries.map(period => {
       const periodDate = new Date(period.date);
       
-      // Count tickets that were resolved in this period
+      // Initialize counts for known source labels
       const fixedCounts = {
-        high: 0,
-        medium: 0,
-        low: 0,
-        unknown: 0,
+        'src-bug-fix': 0,
+        'src-new-feature': 0,
+        'src-golive-critical': 0,
+        'src-integration': 0,
+        'src-tech-debt': 0,
+        'src-maintenance': 0,
+        'src-enhancement': 0,
+        'src-research': 0,
+        'other': 0,
         total: 0
       };
       
-      // Check all tickets to see if they were resolved in this period
+      let debugFixedTickets = []; // For debugging
+      
+      // Calculate period end date based on interval
+      let periodEnd = new Date(periodDate);
+      switch(timeInterval) {
+        case 'weekly':
+          periodEnd.setDate(periodEnd.getDate() + 7);
+          break;
+        case 'monthly':
+          periodEnd.setMonth(periodEnd.getMonth() + 1);
+          break;
+        case 'daily':
+        default:
+          periodEnd.setDate(periodEnd.getDate() + 1);
+          break;
+      }
+
+      // Check all tickets to see if they left Top 7 (became "fixed") in this period
       tickets.forEach(ticket => {
-        // Look for status transitions to Done or Closed
-        const resolutionTransition = ticket.statusTransitions?.find(transition => {
-          const transitionDate = new Date(transition.timestamp);
-          const isInPeriod = transitionDate >= periodDate && transitionDate < new Date(periodDate.getTime() + (timeInterval === 'daily' ? 86400000 : timeInterval === 'weekly' ? 604800000 : 2592000000));
-          const isResolved = transition.toValue && (
-            transition.toValue.toLowerCase().includes('done') || 
-            transition.toValue.toLowerCase().includes('closed') ||
-            transition.toValue.toLowerCase().includes('resolved') ||
-            transition.toValue.toLowerCase().includes('complete')
-          );
-          return isInPeriod && isResolved;
-        });
-        
-        if (resolutionTransition) {
-          // Use the pre-calculated priority category at resolution
-          const priorityCategory = ticket.priorityCategoryAtResolution || 'unknown';
+        // Use the existing outgoing logic: ticket is fixed when it leaves Top 7
+        if (ticket.isOutgoing && ticket.outgoingDate) {
+          const outgoingDate = new Date(ticket.outgoingDate);
+          const isInPeriod = outgoingDate >= periodDate && outgoingDate < periodEnd;
           
-          fixedCounts[priorityCategory]++;
-          fixedCounts.total++;
+          if (isInPeriod) {
+            // This ticket left Top 7 in this period - count as fixed
+            debugFixedTickets.push({
+              key: ticket.key,
+              fixedAt: ticket.outgoingDate,
+              sourceLabels: ticket.sourceLabels || [],
+              priorityAtOutgoing: ticket.priorityAtOutgoing,
+              reason: ticket.priorityAtOutgoing === null ? 'PL cleared' : `PL set to ${ticket.priorityAtOutgoing}`
+            });
+            
+            // Categorize by source label - count tickets in ALL applicable categories
+            if (ticket.sourceLabels && ticket.sourceLabels.length > 0) {
+              let counted = false;
+              // Count the ticket in each category it belongs to
+              ticket.sourceLabels.forEach(label => {
+                if (fixedCounts.hasOwnProperty(label)) {
+                  fixedCounts[label]++;
+                  counted = true;
+                }
+              });
+              // If no known labels were found, count as other
+              if (!counted) {
+                fixedCounts.other++;
+              }
+            } else {
+              fixedCounts.other++;
+            }
+            fixedCounts.total++;
+          }
         }
       });
       
+      // Enhanced debug logging for PL-based fixed tickets
+      if (fixedCounts.total === 0) {
+        console.log(`No tickets left Top 7 for period ${period.date} (${timePeriod})`);
+      } else {
+        const reasonBreakdown = debugFixedTickets.reduce((acc, t) => {
+          acc[t.reason] = (acc[t.reason] || 0) + 1;
+          return acc;
+        }, {});
+        console.log(`Fixed tickets (left Top 7) for ${period.date}: ${fixedCounts.total} total, reasons: ${JSON.stringify(reasonBreakdown)}, tickets: ${debugFixedTickets.map(t => `${t.key}(${t.reason})`).join(', ')}`);
+      }
+      
       return {
         date: period.date,
-        high: fixedCounts.high,
-        medium: fixedCounts.medium,
-        low: fixedCounts.low,
-        unknown: fixedCounts.unknown,
-        total: fixedCounts.total
+        ...fixedCounts
       };
     });
+
+    // Log Fixed Tickets summary after processing all periods
+    const totalFixed = fixedTicketsTimeSeries.reduce((sum, p) => sum + (p.total || 0), 0);
+    const avgPerPeriod = (totalFixed / timeSeries.length).toFixed(2);
+    console.log(`Fixed Tickets Summary (${timePeriod}): ${totalFixed} tickets left Top 7 over ${timeSeries.length} periods, avg ${avgPerPeriod} per period`);
+    console.log(`Expected ~0.4 per day: Current avg = ${avgPerPeriod}, Expected = 0.4, Ratio = ${(parseFloat(avgPerPeriod) / 0.4).toFixed(2)}x`);
 
     // Calculate source label distribution from all tickets
     const sourceLabelsMap = {};
