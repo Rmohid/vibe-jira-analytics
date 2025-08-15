@@ -1427,21 +1427,23 @@ app.post('/api/cache/clear', async (req, res) => {
   }
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    mode: 'production'
-  });
-});
-
 // Health check endpoint for Docker/Kubernetes
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
+  });
+});
+
+// Serve markdown documentation files
+app.get('/*.md', (req, res) => {
+  const filePath = path.join(__dirname, req.path);
+  res.type('text/plain'); // Serve as plain text for browser readability
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      res.status(404).send('Documentation file not found');
+    }
   });
 });
 

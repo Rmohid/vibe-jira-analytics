@@ -3,7 +3,16 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-Jira Analytics Dashboard - A modular React application that provides analytics and visualizations for Jira tickets. The project uses Express.js backend with a modern React frontend built with Vite.
+Jira Analytics Dashboard - A modular React application that provides analytics and visualizations for Jira tickets using the "Top 7" prioritization system. The project uses Express.js backend with a modern React frontend built with Vite.
+
+### Business Context: The Top 7 System
+**Important**: Before modifying code, understand the business logic documented in [TOP7_BUSINESS_LOGIC.md](TOP7_BUSINESS_LOGIC.md).
+
+The "Top 7" represents the active prioritized backlog - tickets with Priority Level < 100 that teams should focus on. Key concepts:
+- **Priority Level (PL)**: Custom field (`customfield_11129`) driving prioritization
+- **Top 7 Entry**: When PL is first assigned or changed to < 100
+- **Top 7 Exit**: When PL is cleared (completed) or set > 99 (deprioritized)
+- **Time in Top 7**: Days since entering the prioritized backlog (not total ticket age)
 
 ### Key Feature: Time in Top 7 Tracking
 The dashboard tracks how long tickets have been in the "Top 7" (prioritized state) rather than their total age since creation. This provides more meaningful insights into how long high-priority work has been pending.

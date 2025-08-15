@@ -1,6 +1,14 @@
 # Jira Analytics Dashboard
 
-A modular React application that provides analytics and visualizations for Jira tickets. Built with Express.js backend and modern React frontend with Vite build system.
+A modular React application that provides analytics and visualizations for Jira tickets with a focus on "Top 7" prioritized backlog management. Built with Express.js backend and modern React frontend with Vite build system.
+
+## 📚 Understanding the Top 7 System
+
+**New to this project?** Start with the [Top 7 Business Logic Documentation](TOP7_BUSINESS_LOGIC.md) to understand:
+- What "Top 7" means and why it matters
+- How Priority Levels drive ticket prioritization
+- State transitions and workflow
+- How to interpret the analytics
 
 ## Dashboard Preview
 
@@ -10,8 +18,8 @@ A modular React application that provides analytics and visualizations for Jira 
 
 ## Features
 
-- **🎯 Time in Top 7 Tracking**: Tracks how long tickets have been prioritized (since first Priority Level assignment) rather than total age since creation
-- **📊 Fixed Tickets Analysis**: Priority Level-based tracking of tickets leaving the Top 7 prioritized backlog (PL > 99 or cleared)
+- **🎯 Time in Top 7 Tracking**: Measures how long tickets have been in the active prioritized backlog (Priority Level < 100) rather than total age since creation. This provides actionable metrics about work queue management.
+- **📊 Fixed Tickets Analysis**: Tracks tickets leaving the Top 7 through completion (PL cleared) or deprioritization (PL > 99). Based on Priority Level transitions, not Jira status changes.
 - **Modular Component Architecture**: Clean separation of concerns with single-responsibility components
 - **Modern React Build System**: Vite for fast development and optimized production builds
 - **Configuration-Driven Dashboard**: Easy content modification through centralized configuration
@@ -325,6 +333,34 @@ npm run build
 # Check console output for specific errors
 ```
 
+## Deployment
+
+### Docker Deployment (Recommended for Intranet)
+
+The application includes production-ready Docker configuration for easy deployment:
+
+```bash
+# Quick start with Docker
+npm run docker:build
+npm run docker:compose
+
+# Access at http://localhost:3001
+```
+
+See [Docker Deployment Guide](DOCKER_DEPLOYMENT.md) for detailed instructions on:
+- Container security features
+- Kubernetes deployment
+- Cloud platform integration
+- Data persistence configuration
+
+### Traditional Deployment
+
+For non-containerized deployment:
+1. Build the frontend: `npm run build`
+2. Start the server: `npm start`
+3. Configure reverse proxy (nginx/Apache) for your domain
+4. Set up process manager (PM2, systemd) for reliability
+
 ## Security
 
 - API tokens are stored locally only
@@ -332,6 +368,7 @@ npm run build
 - No credentials are logged or transmitted to external services
 - All data remains on your local machine
 - Data files are excluded from version control via .gitignore
+- Docker images contain no credentials (mounted via volumes)
 
 ## Support
 

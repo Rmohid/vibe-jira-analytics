@@ -10,6 +10,7 @@ import { ConnectionStatus } from './components/ui/ConnectionStatus'
 import { ConfigPanel } from './components/ui/ConfigPanel'
 import { DevPanel } from './components/ui/DevPanel'
 import { LogsPanel } from './components/ui/LogsPanel'
+import { HelpPanel } from './components/ui/HelpPanel'
 import { DatabaseIcon, RefreshIcon, SettingsIcon } from './components/icons/Icons'
 
 import './styles/styles.css'
@@ -18,6 +19,7 @@ const JiraAnalyticsApp = () => {
     const [showConfig, setShowConfig] = useState(false)
     const [showDevPanel, setShowDevPanel] = useState(false)
     const [showLogs, setShowLogs] = useState(false)
+    const [showHelp, setShowHelp] = useState(false)
     
     // Always use production mode
     const isProductionMode = true
@@ -103,8 +105,15 @@ const JiraAnalyticsApp = () => {
                         </div>
                         
                         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            {/* Developer Tools */}
+                            {/* Help and Tools */}
                             <div className="flex items-center space-x-2">
+                                <button
+                                    onClick={() => setShowHelp(!showHelp)}
+                                    className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm font-medium"
+                                    title="View documentation and help"
+                                >
+                                    ❓ Help
+                                </button>
                                 <button
                                     onClick={() => setShowDevPanel(!showDevPanel)}
                                     className="flex items-center px-3 py-2 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-sm"
@@ -285,6 +294,12 @@ const JiraAnalyticsApp = () => {
                 <LogsPanel 
                     showLogs={showLogs}
                     setShowLogs={setShowLogs}
+                />
+
+                {/* Help Panel */}
+                <HelpPanel 
+                    showHelp={showHelp}
+                    setShowHelp={setShowHelp}
                 />
             </div>
         </div>
