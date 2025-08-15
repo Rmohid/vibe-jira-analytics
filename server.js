@@ -1436,6 +1436,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Health check endpoint for Docker/Kubernetes
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // Serve the HTML app for any other route
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

@@ -13,7 +13,11 @@
     "serve": "npx serve .",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "docker:build": "docker build -t jira-analytics .",
+    "docker:run": "docker run -p 3001:3001 -v ./data:/app/data jira-analytics",
+    "docker:compose": "docker-compose up -d",
+    "docker:down": "docker-compose down"
   },
   "dependencies": {
     "axios": "^1.6.2",

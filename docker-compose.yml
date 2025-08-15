@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  jira-analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jira-analytics-dashboard
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      # Optional: Set if you want to configure CORS for specific origins
+      # - CORS_ORIGIN=http://your-intranet-domain.com
+    volumes:
+      # Persist configuration and data
+      - ./data:/app/data
+      # Optional: Mount custom config at runtime
+      # - ./config.json:/app/data/config.json:ro
+    restart: unless-stopped
+    networks:
+      - jira-analytics-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  jira-analytics-network:
+    driver: bridge
+
+# Optional: Add this section if you want to use named volumes instead of bind mounts
+# volumes:
+#   jira-data:
+#     driver: local
