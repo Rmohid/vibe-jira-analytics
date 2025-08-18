@@ -13,6 +13,10 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// External API router for Grafana and other frontends
+const externalApiRouter = require('./api/external');
+app.use('/api/external', externalApiRouter);
+
 // Serve static files (the HTML app)
 // In production, serve built files from dist/, otherwise serve from root for development compatibility
 const staticPath = fssync.existsSync(path.join(__dirname, 'dist')) ? 'dist' : '.';

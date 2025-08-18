@@ -333,6 +333,28 @@ npm run build
 # Check console output for specific errors
 ```
 
+## External API for Grafana and Other Frontends
+
+The dashboard now includes a comprehensive REST API that allows external systems like Grafana to consume the Jira data. See [API Documentation](API_DOCUMENTATION.md) for complete details.
+
+### Quick Setup with Grafana
+
+1. **Install Grafana JSON datasource plugin**:
+   ```bash
+   grafana-cli plugins install simpod-json-datasource
+   ```
+
+2. **Add datasource in Grafana**:
+   - URL: `http://localhost:3001/api/external`
+   - Access: Server (default)
+
+3. **Available endpoints**:
+   - `/api/external/metrics` - Prometheus-format metrics
+   - `/api/external/query` - Grafana JSON datasource queries
+   - `/api/external/timeseries/:metric` - Time series data
+   - `/api/external/tickets` - Paginated ticket data
+   - See [API Documentation](API_DOCUMENTATION.md) for all endpoints
+
 ## Deployment
 
 ### Docker Deployment (Recommended for Intranet)

@@ -238,6 +238,28 @@ The application follows a clean, modular architecture optimized for Claude Code 
 
 **CRITICAL**: Fixed Tickets logic is **Priority Level-based**, not status-based. Use `ticket.isOutgoing` and `ticket.outgoingDate`, never status transitions.
 
+## External API for Grafana Integration
+
+### API Structure (`api/external.js`)
+The application now includes a comprehensive REST API for external consumers like Grafana:
+
+**Key Endpoints:**
+- `/api/external/metrics` - Prometheus-format metrics for Grafana
+- `/api/external/metrics/json` - JSON metrics for custom applications
+- `/api/external/query` - Grafana JSON datasource query endpoint
+- `/api/external/timeseries/:metric` - Time series data
+- `/api/external/tickets` - Paginated ticket list with filters
+- `/api/external/stats` - Aggregated statistics
+- `/api/external/annotations` - Event annotations for Grafana
+
+**Implementation Details:**
+- Uses cached data from `/data/*.json` files
+- Provides both Prometheus text and JSON formats
+- Supports Grafana's JSON datasource plugin
+- Includes pagination, filtering, and sorting
+- Returns time series data for charts
+- Full documentation in `API_DOCUMENTATION.md`
+
 ## Common Development Commands
 
 ### Development
