@@ -236,7 +236,7 @@ Edit `src/config/dashboardConfig.js` to:
 2. **Make changes** to components in `/src`
 3. **Hot reload** automatically updates the browser
 4. **Use developer tools** (🔧 Dev button) for debugging
-5. **Check logs panel** (📋 Logs button) for errors
+5. **Use developer tools** (🔧 Dev button) for debugging
 6. **Export data/logs** for troubleshooting
 
 ## Testing and Debugging
@@ -262,21 +262,20 @@ npm test tests/integration/ # Integration tests only
 
 Access via the **🔧 Dev** button:
 - **Quick Actions**: Clear data, trigger errors, test loading states
-- **Data Export**: Download configuration, current data, or debug logs
+- **Data Export**: Download configuration, current data, or logs
 - **System Info**: Real-time status of React, charts, data, and errors
 
 ### Debug Logging
 
-Access via the **📋 Logs** button:
+Debug logging is available through the developer panel:
 - **Categorized Logs**: INIT, API, STATE, PERFORMANCE, ERROR
-- **Real-time Streaming**: Live updates as actions occur
-- **Export Capability**: Download logs for analysis
+- **Export Capability**: Download logs via developer panel
 - **Session Persistence**: Logs stored in browser session
 
 ### For Claude Debugging
 
 When reporting issues:
-1. **Open Debug Logs** panel to capture relevant information
+1. **Use developer panel** to capture relevant information
 2. **Export logs** using the developer panel
 3. **Include error details** and steps to reproduce
 
@@ -395,7 +394,7 @@ For non-containerized deployment:
 ## Support
 
 For issues or questions:
-1. **Check the debug logs panel** for error details
+1. **Use the developer panel** for error details and debugging
 2. **Export logs** and include them when reporting issues
 3. Verify your Jira API token and permissions
 4. Ensure your Jira instance is accessible

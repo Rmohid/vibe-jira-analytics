@@ -145,10 +145,6 @@ The application follows a clean, modular architecture optimized for Claude Code 
 - Data export functionality
 - System status indicators
 
-**LogsPanel.jsx:**
-- Real-time logging display
-- Log categorization and filtering
-- Session persistence
 
 **ConnectionStatus.jsx:**
 - API connection status indicator
@@ -281,13 +277,12 @@ The dashboard includes comprehensive debugging tools:
 
 #### Developer Panel (🔧 Dev button)
 - **Quick Actions**: Clear data, trigger test errors, simulate loading states
-- **Data Export**: Export configuration, current data, or debug logs
+- **Data Export**: Export configuration, current data, or logs
 - **System Info**: Real-time status of React, charts, data, and error states
 
-#### Debug Logs Panel (📋 Logs button)
+#### Debug Logging
 - **Categorized Logging**: INIT, API, STATE, PERFORMANCE, ERROR categories
-- **Real-time Streaming**: Live log updates as actions occur
-- **Export Capability**: Download logs for Claude debugging
+- **Export Capability**: Download logs via developer panel for debugging
 - **Session Persistence**: Logs stored in browser session storage
 
 ## Working with Components
@@ -452,7 +447,7 @@ Logger.state('COMPONENT', newState, 'ACTION_TYPE')
 5. **Test with developer tools**
 
 ### When Debugging
-1. **Use the Debug Logs panel** to understand application state
+1. **Use the Developer Panel** to understand application state
 2. **Export logs** for analysis when issues occur
 3. **Check component-specific files** rather than large monoliths
 4. **Use developer panel quick actions** to test edge cases

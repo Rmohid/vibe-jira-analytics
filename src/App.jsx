@@ -9,7 +9,6 @@ import { DashboardRenderer } from './components/DashboardRenderer'
 import { ConnectionStatus } from './components/ui/ConnectionStatus'
 import { ConfigPanel } from './components/ui/ConfigPanel'
 import { DevPanel } from './components/ui/DevPanel'
-import { LogsPanel } from './components/ui/LogsPanel'
 import { HelpPanel } from './components/ui/HelpPanel'
 import { DatabaseIcon, RefreshIcon, SettingsIcon } from './components/icons/Icons'
 
@@ -18,7 +17,6 @@ import './styles/styles.css'
 const JiraAnalyticsApp = () => {
     const [showConfig, setShowConfig] = useState(false)
     const [showDevPanel, setShowDevPanel] = useState(false)
-    const [showLogs, setShowLogs] = useState(false)
     const [showHelp, setShowHelp] = useState(false)
     
     // Always use production mode
@@ -120,13 +118,6 @@ const JiraAnalyticsApp = () => {
                                     title="Toggle developer panel"
                                 >
                                     🔧 Dev
-                                </button>
-                                <button
-                                    onClick={() => setShowLogs(!showLogs)}
-                                    className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
-                                    title="Toggle logs panel"
-                                >
-                                    📋 Logs
                                 </button>
                             </div>
 
@@ -290,11 +281,6 @@ const JiraAnalyticsApp = () => {
                     error={error}
                 />
 
-                {/* Logs Panel */}
-                <LogsPanel 
-                    showLogs={showLogs}
-                    setShowLogs={setShowLogs}
-                />
 
                 {/* Help Panel */}
                 <HelpPanel 

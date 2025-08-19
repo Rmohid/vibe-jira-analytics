@@ -23,6 +23,16 @@ const staticPath = fssync.existsSync(path.join(__dirname, 'dist')) ? 'dist' : '.
 app.use(express.static(staticPath));
 console.log(`📂 Serving static files from: ${staticPath}`);
 
+// Explicitly serve markdown files from root directory
+app.get('/*.md', (req, res) => {
+  const mdFile = path.join(__dirname, req.path);
+  if (fssync.existsSync(mdFile)) {
+    res.sendFile(mdFile);
+  } else {
+    res.status(404).send('Documentation file not found');
+  }
+});
+
 // Data persistence paths
 const DATA_DIR = path.join(__dirname, 'data');
 const TICKETS_FILE = path.join(DATA_DIR, 'tickets.json');
@@ -1453,7 +1463,16 @@ app.get('/*.md', (req, res) => {
 
 // Serve the HTML app for any other route
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  // In production, serve from dist folder, otherwise serve src/index.html for development
+  const indexPath = fssync.existsSync(path.join(__dirname, 'dist', 'index.html')) 
+    ? path.join(__dirname, 'dist', 'index.html')
+    : path.join(__dirname, 'src', 'index.html');
+  
+  if (fssync.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Application not found. Please run "npm run build" for production or "npm run dev" for development.');
+  }
 });
 
 app.listen(PORT, () => {
