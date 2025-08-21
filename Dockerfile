@@ -43,6 +43,9 @@ COPY --chown=nodejs:nodejs src/config ./src/config
 COPY --chown=nodejs:nodejs src/utils ./src/utils
 COPY --chown=nodejs:nodejs api ./api
 
+# Copy documentation files that the app needs to serve
+COPY --chown=nodejs:nodejs *.md ./
+
 # Create data directory for config storage
 RUN mkdir -p /app/data && \
     chown -R nodejs:nodejs /app/data
