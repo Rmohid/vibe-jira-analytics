@@ -41,6 +41,7 @@ COPY --from=frontend-builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --chown=nodejs:nodejs server.js ./
 COPY --chown=nodejs:nodejs src/config ./src/config
 COPY --chown=nodejs:nodejs src/utils ./src/utils
+COPY --chown=nodejs:nodejs api ./api
 
 # Create data directory for config storage
 RUN mkdir -p /app/data && \
