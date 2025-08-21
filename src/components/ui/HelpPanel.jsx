@@ -8,6 +8,28 @@ export const HelpPanel = ({ showHelp, setShowHelp }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // Utility function to generate anchor IDs from heading text
+    const generateAnchorId = (children) => {
+        if (!children) return '';
+        
+        // Extract text content from React children (handles strings, arrays, etc.)
+        const extractText = (child) => {
+            if (typeof child === 'string') return child;
+            if (Array.isArray(child)) return child.map(extractText).join('');
+            if (child && typeof child === 'object' && child.props && child.props.children) {
+                return extractText(child.props.children);
+            }
+            return '';
+        };
+        
+        const text = extractText(children);
+        return text.toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+            .replace(/\s+/g, '-')         // Replace spaces with hyphens
+            .replace(/-+/g, '-')          // Replace multiple hyphens with single hyphen
+            .replace(/(^-|-$)/g, '');     // Remove leading/trailing hyphens
+    };
+
     const documentationLinks = [
         {
             title: "📚 Top 7 Business Logic",
@@ -249,11 +271,23 @@ export const HelpPanel = ({ showHelp, setShowHelp }) => {
                                     <ReactMarkdown 
                                         remarkPlugins={[remarkGfm]}
                                         components={{
-                                            // Custom renderers for better styling
-                                            h1: ({children}) => <h1 className="text-3xl font-bold text-gray-900 mb-4 pb-2 border-b">{children}</h1>,
-                                            h2: ({children}) => <h2 className="text-2xl font-bold text-gray-800 mt-8 mb-3">{children}</h2>,
-                                            h3: ({children}) => <h3 className="text-xl font-semibold text-gray-700 mt-6 mb-2">{children}</h3>,
-                                            h4: ({children}) => <h4 className="text-lg font-semibold text-gray-700 mt-4 mb-2">{children}</h4>,
+                                            // Custom renderers for better styling and anchor link support
+                                            h1: ({children}) => {
+                                                const id = generateAnchorId(children);
+                                                return <h1 id={id} className="text-3xl font-bold text-gray-900 mb-4 pb-2 border-b">{children}</h1>;
+                                            },
+                                            h2: ({children}) => {
+                                                const id = generateAnchorId(children);
+                                                return <h2 id={id} className="text-2xl font-bold text-gray-800 mt-8 mb-3">{children}</h2>;
+                                            },
+                                            h3: ({children}) => {
+                                                const id = generateAnchorId(children);
+                                                return <h3 id={id} className="text-xl font-semibold text-gray-700 mt-6 mb-2">{children}</h3>;
+                                            },
+                                            h4: ({children}) => {
+                                                const id = generateAnchorId(children);
+                                                return <h4 id={id} className="text-lg font-semibold text-gray-700 mt-4 mb-2">{children}</h4>;
+                                            },
                                             p: ({children}) => <p className="text-gray-600 mb-4 leading-relaxed">{children}</p>,
                                             ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-1 text-gray-600">{children}</ul>,
                                             ol: ({children}) => <ol className="list-decimal list-inside mb-4 space-y-1 text-gray-600">{children}</ol>,
@@ -282,11 +316,36 @@ export const HelpPanel = ({ showHelp, setShowHelp }) => {
                                             thead: ({children}) => <thead className="bg-gray-100">{children}</thead>,
                                             th: ({children}) => <th className="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700">{children}</th>,
                                             td: ({children}) => <td className="border border-gray-300 px-4 py-2 text-gray-600">{children}</td>,
-                                            a: ({href, children}) => (
-                                                <a href={href} className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">
-                                                    {children}
-                                                </a>
-                                            ),
+                                            a: ({href, children}) => {
+                                                // Handle internal anchor links (starting with #)
+                                                if (href && href.startsWith('#')) {
+                                                    return (
+                                                        <a 
+                                                            href={href} 
+                                                            className="text-blue-600 hover:text-blue-800 underline cursor-pointer"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                const targetId = href.substring(1);
+                                                                const targetElement = document.getElementById(targetId);
+                                                                if (targetElement) {
+                                                                    targetElement.scrollIntoView({ 
+                                                                        behavior: 'smooth',
+                                                                        block: 'start'
+                                                                    });
+                                                                }
+                                                            }}
+                                                        >
+                                                            {children}
+                                                        </a>
+                                                    );
+                                                }
+                                                // Handle external links
+                                                return (
+                                                    <a href={href} className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">
+                                                        {children}
+                                                    </a>
+                                                );
+                                            },
                                             hr: () => <hr className="my-6 border-gray-300" />,
                                             strong: ({children}) => <strong className="font-semibold text-gray-800">{children}</strong>,
                                             em: ({children}) => <em className="italic">{children}</em>,
