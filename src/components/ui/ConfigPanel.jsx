@@ -75,6 +75,15 @@ export const ConfigPanel = ({
                                 (Saved locally)
                             </span>
                         )}
+                        <a 
+                            href="https://id.atlassian.com/manage-profile/security/api-tokens" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="ml-2 text-xs text-blue-600 hover:text-blue-800 underline font-normal"
+                            title="Create an API token in your Atlassian account"
+                        >
+                            Get API Token →
+                        </a>
                     </label>
                     <input
                         type="password"
@@ -86,6 +95,9 @@ export const ConfigPanel = ({
                         data-lpignore="true"
                         data-form-type="other"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                        Need help? Click "Get API Token" above to create one in your Atlassian account.
+                    </p>
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-2">Project Key</label>
