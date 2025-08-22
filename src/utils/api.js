@@ -1,7 +1,10 @@
 // Production API calls (connects to real backend)
 export const productionJiraAPI = async (endpoint, data = {}) => {
     try {
-        const response = await fetch(`http://localhost:3001/api/jira/${endpoint}`, {
+        // Use relative URL so it works both through nginx proxy and direct access
+        const apiUrl = `/api/jira/${endpoint}`;
+        
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -13,6 +16,7 @@ export const productionJiraAPI = async (endpoint, data = {}) => {
         
         return await response.json();
     } catch (err) {
-        throw new Error('Backend not available. Run server.js first.');
+        console.error('API call failed:', err);
+        throw new Error('Backend not available. Check your connection or try refreshing the page.');
     }
 };

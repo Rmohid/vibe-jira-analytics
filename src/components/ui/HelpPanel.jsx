@@ -232,7 +232,7 @@ export const HelpPanel = ({ showHelp, setShowHelp }) => {
                                         <summary className="font-medium text-gray-800">How do I use the External API with Grafana?</summary>
                                         <p className="mt-2 text-gray-600 text-sm">
                                             1. Install Grafana's JSON datasource plugin<br/>
-                                            2. Add datasource with URL: http://localhost:3001/api/external<br/>
+                                            2. Add datasource with URL: http://your-server/api/external<br/>
                                             3. Use endpoints like /metrics for Prometheus format<br/>
                                             4. See API Documentation for all available endpoints
                                         </p>

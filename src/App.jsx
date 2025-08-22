@@ -215,7 +215,7 @@ const JiraAnalyticsApp = () => {
                             <DatabaseIcon />
                             <div className="ml-3 text-sm text-green-800">
                                 <p className="font-medium mb-1">Production Mode - Live Jira Connection</p>
-                                <p>Connected to real Jira API endpoints. Requires valid API token and backend server running on localhost:3001.</p>
+                                <p>Connected to real Jira API endpoints. Requires valid API token and backend server (automatically available in deployed application).</p>
                             </div>
                         </div>
                     </div>
