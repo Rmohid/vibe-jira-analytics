@@ -9,6 +9,54 @@ export const useJiraData = (jiraConfig, timePeriod, timeInterval, customDays, st
     const [realData, setRealData] = useState(null)
     const [error, setError] = useState(null)
     
+    // Load cached data without authentication
+    const loadCachedData = useCallback(async () => {
+        setLoading(true)
+        setError(null)
+
+        try {
+            console.log('[useJiraData] Loading cached data...');
+            
+            const response = await productionJiraAPI('load-cached-data', {});
+            
+            console.log('[useJiraData] Cached data response received:', {
+                hasCurrentData: !!response.currentData,
+                hasHistoricalData: !!response.historicalData,
+                currentTickets: response.currentData?.tickets?.length || 0,
+                fromCache: response.currentData?.fromCache
+            });
+
+            if (response.currentData) {
+                const currentData = response.currentData;
+                const historicalData = response.historicalData || {};
+                
+                setRealData({
+                    currentCounts: currentData.counts,
+                    tickets: currentData.tickets,
+                    historicalTrend: historicalData.timeSeries,
+                    sourceLabelsTimeSeries: historicalData.sourceLabelsTimeSeries,
+                    averageAgeTimeSeries: historicalData.averageAgeTimeSeries,
+                    fixedTicketsTimeSeries: historicalData.fixedTicketsTimeSeries,
+                    sourceLabels: historicalData.sourceLabels,
+                    timeInterval: historicalData.timeInterval || 'daily',
+                    lastUpdated: currentData.fetchedAt || new Date().toISOString(),
+                    fromCache: true
+                });
+
+                setConnectionStatus('connected')
+                setLastSync(currentData.fetchedAt || new Date().toISOString())
+            } else {
+                setError('No cached data available. Please fetch data first with valid credentials.')
+                setConnectionStatus('disconnected')
+            }
+        } catch (err) {
+            setError(err.message || 'Failed to load cached data')
+            setConnectionStatus('error')
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+    
     // Fetch data function
     const fetchData = useCallback(async () => {
         if (!jiraConfig.apiToken) {
@@ -100,6 +148,7 @@ export const useJiraData = (jiraConfig, timePeriod, timeInterval, customDays, st
         realData,
         error,
         fetchData,
+        loadCachedData,
         setRealData,
         setError,
         setLoading

@@ -1441,6 +1441,69 @@ app.post('/api/cache/clear', async (req, res) => {
   }
 });
 
+// Load cached data without authentication
+app.post('/api/jira/load-cached-data', async (req, res) => {
+  try {
+    console.log('Loading cached data (no authentication required)...');
+    
+    // Load tickets data
+    const ticketsData = await loadSavedData(TICKETS_FILE);
+    
+    // Load historical data
+    const historicalData = await loadSavedData(HISTORICAL_FILE);
+    
+    if (ticketsData && historicalData) {
+      console.log(`Loaded ${ticketsData.tickets?.length || 0} tickets from cache`);
+      console.log(`Loaded ${historicalData.timeSeries?.length || 0} historical data points from cache`);
+      
+      return res.json({
+        currentData: {
+          ...ticketsData,
+          fromCache: true,
+          cacheInfo: {
+            savedAt: ticketsData.fetchedAt,
+            ticketCount: ticketsData.tickets?.length || 0,
+            source: 'local_cache'
+          }
+        },
+        historicalData: {
+          ...historicalData,
+          fromCache: true,
+          cacheInfo: {
+            savedAt: historicalData.fetchedAt,
+            source: 'local_cache'
+          }
+        }
+      });
+    } else if (ticketsData) {
+      // Only tickets data available
+      return res.json({
+        currentData: {
+          ...ticketsData,
+          fromCache: true,
+          cacheInfo: {
+            savedAt: ticketsData.fetchedAt,
+            ticketCount: ticketsData.tickets?.length || 0,
+            source: 'local_cache'
+          }
+        },
+        historicalData: null
+      });
+    } else {
+      return res.status(404).json({
+        error: 'No cached data available',
+        suggestion: 'Use "Fetch Data" button with valid API credentials to retrieve data from Jira first.'
+      });
+    }
+  } catch (error) {
+    console.error('Error loading cached data:', error);
+    res.status(500).json({ 
+      error: 'Failed to load cached data',
+      details: error.message 
+    });
+  }
+});
+
 // Health check endpoint for Docker/Kubernetes
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 

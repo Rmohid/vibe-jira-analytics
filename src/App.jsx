@@ -42,6 +42,7 @@ const JiraAnalyticsApp = () => {
         realData,
         error,
         fetchData,
+        loadCachedData,
         setRealData,
         setError,
         setLoading
@@ -98,7 +99,7 @@ const JiraAnalyticsApp = () => {
                             <DatabaseIcon />
                             <div className="ml-3">
                                 <h1 className="text-2xl font-bold text-gray-900">Jira Analytics Dashboard</h1>
-                                <ConnectionStatus connectionStatus={connectionStatus} lastSync={lastSync} />
+                                <ConnectionStatus connectionStatus={connectionStatus} lastSync={lastSync} fromCache={realData?.fromCache} />
                             </div>
                         </div>
                         
@@ -199,9 +200,20 @@ const JiraAnalyticsApp = () => {
                             </button>
                             
                             <button
+                                onClick={loadCachedData}
+                                disabled={loading}
+                                className="flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300"
+                                title="Load existing cached data (no authentication required)"
+                            >
+                                <DatabaseIcon />
+                                <span className="ml-2">{loading ? 'Loading...' : 'Load Cached'}</span>
+                            </button>
+                            
+                            <button
                                 onClick={fetchData}
                                 disabled={loading || !jiraConfig.apiToken}
                                 className="flex items-center px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
+                                title={!jiraConfig.apiToken ? 'API token required to fetch fresh data from Jira' : 'Fetch fresh data from Jira'}
                             >
                                 <RefreshIcon spinning={loading} />
                                 <span className="ml-2">{loading ? 'Fetching...' : 'Fetch Data'}</span>
@@ -256,13 +268,10 @@ const JiraAnalyticsApp = () => {
                         <DatabaseIcon />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No Data Loaded</h3>
                         <p className="text-gray-500 mb-6">
-                            {!jiraConfig.apiToken 
-                                ? 'Configure your Jira API token and click "Fetch Data" to load live ticket information.'
-                                : 'Click "Fetch Data" to load your Jira tickets and analytics.'
-                            }
+                            Click "Load Live Data" to load existing cached data, or configure your Jira API token and click "Fetch Data" to retrieve fresh data from Jira.
                         </p>
                         <button
-                            onClick={fetchData}
+                            onClick={loadCachedData}
                             className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
                         >
                             Load Live Data

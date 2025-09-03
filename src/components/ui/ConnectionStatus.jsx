@@ -1,14 +1,14 @@
 import React from 'react'
 import { CheckIcon, XIcon, ClockIcon } from '../icons/Icons'
 
-export const ConnectionStatus = ({ connectionStatus, lastSync }) => {
+export const ConnectionStatus = ({ connectionStatus, lastSync, fromCache }) => {
     const getStatusConfig = () => {
         switch(connectionStatus) {
             case 'connected':
                 return {
                     color: 'text-green-600',
                     icon: <CheckIcon />,
-                    text: 'Connected to Jira'
+                    text: fromCache ? 'Cached Data Loaded' : 'Connected to Jira'
                 }
             case 'error':
                 return {
