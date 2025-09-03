@@ -74,9 +74,8 @@ export const HelpPanel = ({ showHelp, setShowHelp }) => {
         setLoading(true);
         setError(null);
         try {
-            // In development, fetch from the Express server port
-            const baseUrl = window.location.port === '3000' ? 'http://localhost:3001' : '';
-            const response = await fetch(`${baseUrl}/${filename}`);
+            // Use relative URL that works with any host
+            const response = await fetch(`/${filename}`);
             if (!response.ok) {
                 throw new Error(`Failed to load ${filename}`);
             }
