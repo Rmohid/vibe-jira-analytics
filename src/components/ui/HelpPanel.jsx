@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import packageJson from '../../../package.json';
 
 export const HelpPanel = ({ showHelp, setShowHelp }) => {
     const [selectedDoc, setSelectedDoc] = useState(null);
@@ -363,6 +364,7 @@ export const HelpPanel = ({ showHelp, setShowHelp }) => {
                 {!selectedDoc && (
                     <div className="bg-gray-100 px-6 py-4 text-center text-sm text-gray-600 rounded-b-lg flex-shrink-0">
                         <p>Click on any documentation link to view the full content inline</p>
+                        <p className="text-xs text-gray-500 mt-2">Jira Analytics Dashboard v{packageJson.version}</p>
                     </div>
                 )}
             </div>
