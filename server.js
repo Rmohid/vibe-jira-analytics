@@ -432,8 +432,12 @@ const generateTimeSeriesForPeriod = (tickets, interval, timePeriod, customDays, 
     if (timePeriod === 'custom') {
       days = customDays || 30;
     } else {
-      const match = timePeriod?.match(/^(\d+)d$/);
-      days = match ? parseInt(match[1]) : 30;
+      if (typeof timePeriod === 'number') {
+        days = timePeriod;
+      } else {
+        const match = timePeriod?.match(/^(\d+)d$/);
+        days = match ? parseInt(match[1]) : parseInt(timePeriod) || 30;
+      }
     }
     
     endDateObj = new Date();
@@ -913,9 +917,13 @@ app.post('/api/jira/historical-data', async (req, res) => {
       if (timePeriod === 'custom') {
         days = customDays || 30;
       } else {
-        // Extract days from formats like "7d", "30d", "90d", etc.
-        const match = timePeriod?.match(/^(\d+)d$/);
-        days = match ? parseInt(match[1]) : 30;
+        // Extract days from formats like "7d", "30d", "90d", etc. or handle numeric values
+        if (typeof timePeriod === 'number') {
+          days = timePeriod;
+        } else {
+          const match = timePeriod?.match(/^(\d+)d$/);
+          days = match ? parseInt(match[1]) : parseInt(timePeriod) || 30;
+        }
       }
       
       // Expand the range to catch tickets created earlier but resolved in the target period
