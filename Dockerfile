@@ -50,6 +50,9 @@ COPY --chown=nodejs:nodejs *.md ./
 RUN mkdir -p /app/data && \
     chown -R nodejs:nodejs /app/data
 
+# Create persistent volume for data storage
+VOLUME ["/app/data"]
+
 # Switch to non-root user
 USER nodejs
 
