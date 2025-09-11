@@ -584,7 +584,7 @@ const batchJQLQuery = async (jira, jql, fields, maxResults = 2000, expand = []) 
       requestBody.expand = expand;
     }
     
-    const response = await jira.post('/search/jql', requestBody);
+    const response = await jira.post('/search', requestBody);
 
     const batchIssues = response.data.issues || [];
     allIssues = allIssues.concat(batchIssues);
