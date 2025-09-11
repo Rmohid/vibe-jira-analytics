@@ -573,18 +573,19 @@ const batchJQLQuery = async (jira, jql, fields, maxResults = 2000, expand = []) 
   do {
     console.log(`Batch ${batchCount + 1}: Fetching issues ${startAt} to ${startAt + batchSize - 1}`);
     
-    const requestBody = {
+    // The /search/jql endpoint requires GET method with query parameters
+    const params = {
       jql: jql,
-      fields: fields,
+      fields: fields.join(','),
       maxResults: batchSize,
       startAt: startAt
     };
     
     if (expand.length > 0) {
-      requestBody.expand = expand;
+      params.expand = expand.join(',');
     }
     
-    const response = await jira.post('/search', requestBody);
+    const response = await jira.get('/search/jql', { params });
 
     const batchIssues = response.data.issues || [];
     allIssues = allIssues.concat(batchIssues);
