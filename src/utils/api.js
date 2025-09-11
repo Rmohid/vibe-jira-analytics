@@ -11,12 +11,25 @@ export const productionJiraAPI = async (endpoint, data = {}) => {
         });
         
         if (!response.ok) {
-            throw new Error(`Backend API error: ${response.status}`);
+            // Try to get the error message from the response
+            let errorMessage = `API error: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch (e) {
+                // If response is not JSON, use status text
+                errorMessage = response.statusText || errorMessage;
+            }
+            throw new Error(errorMessage);
         }
         
         return await response.json();
     } catch (err) {
         console.error('API call failed:', err);
-        throw new Error('Backend not available. Check your connection or try refreshing the page.');
+        // Pass through the actual error message instead of generic one
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+            throw new Error('Backend not available. Check your connection or try refreshing the page.');
+        }
+        throw err;
     }
 };
