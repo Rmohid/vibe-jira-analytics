@@ -39,6 +39,13 @@ const TICKETS_FILE = path.join(DATA_DIR, 'tickets.json');
 const HISTORICAL_FILE = path.join(DATA_DIR, 'historical.json');
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
 
+// In-memory cache for current session (fallback when file persistence fails)
+let memoryCache = {
+  tickets: null,
+  historical: null,
+  lastUpdated: null
+};
+
 // Ensure data directory exists
 const ensureDataDir = async () => {
   try {
@@ -815,6 +822,11 @@ app.post('/api/jira/current-tickets', async (req, res) => {
       console.log(`Save skipped: ${saveResult.reason}`);
     }
 
+    // Also store in memory cache as fallback
+    memoryCache.tickets = response;
+    memoryCache.lastUpdated = new Date().toISOString();
+    console.log('Data stored in memory cache as fallback');
+
     res.json(response);
 
   } catch (error) {
@@ -1327,6 +1339,11 @@ app.post('/api/jira/historical-data', async (req, res) => {
       console.log(`Historical save skipped: ${saveResult.reason}`);
     }
 
+    // Also store in memory cache as fallback
+    memoryCache.historical = response;
+    memoryCache.lastUpdated = new Date().toISOString();
+    console.log('Historical data stored in memory cache as fallback');
+
     res.json(response);
 
   } catch (error) {
@@ -1455,11 +1472,19 @@ app.post('/api/jira/load-cached-data', async (req, res) => {
   try {
     console.log('Loading cached data (no authentication required)...');
     
-    // Load tickets data
-    const ticketsData = await loadSavedData(TICKETS_FILE);
+    // Try to load tickets data from file, fallback to memory cache
+    let ticketsData = await loadSavedData(TICKETS_FILE);
+    if (!ticketsData && memoryCache.tickets) {
+      console.log('Using tickets data from memory cache');
+      ticketsData = memoryCache.tickets;
+    }
     
-    // Load historical data
-    const historicalData = await loadSavedData(HISTORICAL_FILE);
+    // Try to load historical data from file, fallback to memory cache
+    let historicalData = await loadSavedData(HISTORICAL_FILE);
+    if (!historicalData && memoryCache.historical) {
+      console.log('Using historical data from memory cache');
+      historicalData = memoryCache.historical;
+    }
     
     if (ticketsData && historicalData) {
       console.log(`Loaded ${ticketsData.tickets?.length || 0} tickets from cache`);
