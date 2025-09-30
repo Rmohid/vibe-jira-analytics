@@ -237,6 +237,33 @@ export const HelpPanel = ({ showHelp, setShowHelp }) => {
                                             4. See API Documentation for all available endpoints
                                         </p>
                                     </details>
+
+                                    <details className="bg-white rounded-lg p-3 cursor-pointer">
+                                        <summary className="font-medium text-gray-800">Curl Examples for API Testing</summary>
+                                        <div className="mt-2 text-gray-600 text-sm space-y-2">
+                                            <p><strong>Get Fixed Tickets by Date Range:</strong></p>
+                                            <code className="block bg-gray-100 p-2 rounded text-xs">
+                                                curl "http://localhost:3001/api/external/tickets/fixed?from=2025-09-01&to=2025-09-30"
+                                            </code>
+
+                                            <p><strong>Source Label Analysis (Weekly):</strong></p>
+                                            <code className="block bg-gray-100 p-2 rounded text-xs">
+                                                curl "http://localhost:3001/api/external/tickets/sources?source=src-bug-fix&interval=weekly"
+                                            </code>
+
+                                            <p><strong>Current Statistics:</strong></p>
+                                            <code className="block bg-gray-100 p-2 rounded text-xs">
+                                                curl "http://localhost:3001/api/external/stats"
+                                            </code>
+
+                                            <p><strong>Extract Ticket Keys Only:</strong></p>
+                                            <code className="block bg-gray-100 p-2 rounded text-xs">
+                                                curl "http://localhost:3001/api/external/tickets/fixed" | jq '.tickets[].key'
+                                            </code>
+
+                                            <p className="text-blue-600">💡 See API Documentation for complete examples</p>
+                                        </div>
+                                    </details>
                                     
                                     <details className="bg-white rounded-lg p-3 cursor-pointer">
                                         <summary className="font-medium text-gray-800">Where can I find debug logs?</summary>

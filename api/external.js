@@ -389,22 +389,261 @@ router.get('/tickets', async (req, res) => {
     }
 })
 
+// Get fixed tickets by date range (must come before /:key route)
+router.get('/tickets/fixed', async (req, res) => {
+    try {
+        const { from, to, page = 1, limit = 100 } = req.query
+        const { tickets } = await loadCachedData()
+
+        if (!tickets.tickets) {
+            return res.json({ tickets: [], total: 0, page: 1, limit: 100 })
+        }
+
+        let fixedTickets = tickets.tickets.filter(t => t.outgoingDate)
+
+        // Apply date range filter if provided
+        if (from || to) {
+            const fromDate = from ? new Date(from) : new Date('1900-01-01')
+            const toDate = to ? new Date(to) : new Date()
+
+            fixedTickets = fixedTickets.filter(t => {
+                const outgoingDate = new Date(t.outgoingDate)
+                return outgoingDate >= fromDate && outgoingDate <= toDate
+            })
+        }
+
+        // Sort by outgoing date (most recent first)
+        fixedTickets.sort((a, b) => new Date(b.outgoingDate) - new Date(a.outgoingDate))
+
+        // Pagination
+        const startIndex = (page - 1) * limit
+        const endIndex = startIndex + parseInt(limit)
+        const paginatedTickets = fixedTickets.slice(startIndex, endIndex)
+
+        // Format response
+        const formattedTickets = paginatedTickets.map(t => ({
+            key: t.key,
+            summary: t.summary,
+            outgoingDate: t.outgoingDate,
+            timeInTop7Days: t.timeInTop7Days,
+            priorityLevel: t.priorityLevel,
+            priorityCategory: t.priorityCategory,
+            status: t.status,
+            sourceLabels: t.sourceLabels,
+            incomingDate: t.incomingDate
+        }))
+
+        res.json({
+            tickets: formattedTickets,
+            total: fixedTickets.length,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(fixedTickets.length / limit),
+            dateRange: {
+                from: from || null,
+                to: to || null
+            }
+        })
+    } catch (error) {
+        console.error('Error fetching fixed tickets:', error)
+        res.status(500).json({ error: 'Failed to fetch fixed tickets' })
+    }
+})
+
+// Get source label analysis over time
+router.get('/tickets/sources', async (req, res) => {
+    try {
+        const { from, to, interval = 'daily', source } = req.query
+        const { tickets, historical } = await loadCachedData()
+
+        if (!tickets.tickets) {
+            return res.json({ analysis: [], total: 0, dateRange: { from: from || null, to: to || null } })
+        }
+
+        // Get all unique source labels if none specified
+        const allSources = new Set()
+        tickets.tickets.forEach(ticket => {
+            if (ticket.sourceLabels && Array.isArray(ticket.sourceLabels)) {
+                ticket.sourceLabels.forEach(label => allSources.add(label))
+            }
+        })
+
+        const sourcesToAnalyze = source ? [source] : Array.from(allSources)
+
+        // Filter tickets by date range if provided
+        let filteredTickets = [...tickets.tickets]
+        if (from || to) {
+            const fromDate = from ? new Date(from) : new Date('1900-01-01')
+            const toDate = to ? new Date(to) : new Date()
+
+            filteredTickets = filteredTickets.filter(t => {
+                // Include tickets that have any activity in the date range
+                const createdDate = new Date(t.created)
+                const incomingDate = t.incomingDate ? new Date(t.incomingDate) : null
+                const outgoingDate = t.outgoingDate ? new Date(t.outgoingDate) : null
+
+                return (createdDate >= fromDate && createdDate <= toDate) ||
+                       (incomingDate && incomingDate >= fromDate && incomingDate <= toDate) ||
+                       (outgoingDate && outgoingDate >= fromDate && outgoingDate <= toDate)
+            })
+        }
+
+        // Generate time series based on interval
+        const generateTimePeriods = (from, to, interval) => {
+            const periods = []
+            const start = from ? new Date(from) : new Date(Math.min(...filteredTickets.map(t => new Date(t.created))))
+            const end = to ? new Date(to) : new Date()
+
+            let current = new Date(start)
+            current.setHours(0, 0, 0, 0)
+
+            while (current <= end) {
+                const periodEnd = new Date(current)
+
+                switch (interval) {
+                    case 'weekly':
+                        periodEnd.setDate(current.getDate() + 6)
+                        break
+                    case 'monthly':
+                        periodEnd.setMonth(current.getMonth() + 1)
+                        periodEnd.setDate(0) // Last day of month
+                        break
+                    default: // daily
+                        periodEnd.setDate(current.getDate())
+                        break
+                }
+
+                periods.push({
+                    date: current.toISOString().split('T')[0],
+                    start: new Date(current),
+                    end: new Date(periodEnd)
+                })
+
+                // Move to next period
+                switch (interval) {
+                    case 'weekly':
+                        current.setDate(current.getDate() + 7)
+                        break
+                    case 'monthly':
+                        current.setMonth(current.getMonth() + 1)
+                        current.setDate(1)
+                        break
+                    default: // daily
+                        current.setDate(current.getDate() + 1)
+                        break
+                }
+            }
+
+            return periods
+        }
+
+        const timePeriods = generateTimePeriods(from, to, interval)
+
+        // Analyze each time period
+        const analysis = timePeriods.map(period => {
+            const periodData = {
+                date: period.date,
+                interval: interval,
+                sources: {}
+            }
+
+            sourcesToAnalyze.forEach(sourceLabel => {
+                // Count tickets by source for this period
+                const sourceTickets = filteredTickets.filter(ticket =>
+                    ticket.sourceLabels && ticket.sourceLabels.includes(sourceLabel)
+                )
+
+                const periodSourceData = {
+                    total: 0,
+                    inTop7: 0,
+                    avgTimeInTop7: 0,
+                    incoming: 0, // Entered Top 7 in this period
+                    outgoing: 0, // Left Top 7 in this period
+                    tickets: []
+                }
+
+                sourceTickets.forEach(ticket => {
+                    const incomingDate = ticket.incomingDate ? new Date(ticket.incomingDate) : null
+                    const outgoingDate = ticket.outgoingDate ? new Date(ticket.outgoingDate) : null
+
+                    // Check if ticket was active in this period
+                    const wasActiveInPeriod = incomingDate && incomingDate <= period.end &&
+                                            (!outgoingDate || outgoingDate >= period.start)
+
+                    if (wasActiveInPeriod) {
+                        periodSourceData.total++
+
+                        // Check if still in Top 7 at end of period
+                        if (!outgoingDate || outgoingDate > period.end) {
+                            periodSourceData.inTop7++
+                        }
+
+                        // Track incoming (entered Top 7 in this period)
+                        if (incomingDate >= period.start && incomingDate <= period.end) {
+                            periodSourceData.incoming++
+                        }
+
+                        // Track outgoing (left Top 7 in this period)
+                        if (outgoingDate && outgoingDate >= period.start && outgoingDate <= period.end) {
+                            periodSourceData.outgoing++
+                        }
+
+                        periodSourceData.tickets.push({
+                            key: ticket.key,
+                            summary: ticket.summary,
+                            timeInTop7Days: ticket.timeInTop7Days,
+                            priorityLevel: ticket.priorityLevel,
+                            status: ticket.status,
+                            incomingDate: ticket.incomingDate,
+                            outgoingDate: ticket.outgoingDate
+                        })
+                    }
+                })
+
+                // Calculate average time in Top 7 for this period
+                if (periodSourceData.tickets.length > 0) {
+                    const totalTime = periodSourceData.tickets.reduce((sum, t) => sum + (t.timeInTop7Days || 0), 0)
+                    periodSourceData.avgTimeInTop7 = Math.round(totalTime / periodSourceData.tickets.length * 10) / 10
+                }
+
+                periodData.sources[sourceLabel] = periodSourceData
+            })
+
+            return periodData
+        })
+
+        res.json({
+            analysis,
+            total: analysis.length,
+            interval,
+            sourcesAnalyzed: sourcesToAnalyze,
+            dateRange: {
+                from: from || null,
+                to: to || null
+            }
+        })
+    } catch (error) {
+        console.error('Error generating source label analysis:', error)
+        res.status(500).json({ error: 'Failed to generate source label analysis' })
+    }
+})
+
 // Get ticket by key
 router.get('/tickets/:key', async (req, res) => {
     try {
         const { key } = req.params
         const { tickets } = await loadCachedData()
-        
+
         if (!tickets.tickets) {
             return res.status(404).json({ error: 'Ticket not found' })
         }
-        
+
         const ticket = tickets.tickets.find(t => t.key === key)
-        
+
         if (!ticket) {
             return res.status(404).json({ error: 'Ticket not found' })
         }
-        
+
         res.json(ticket)
     } catch (error) {
         console.error('Error fetching ticket:', error)

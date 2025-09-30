@@ -252,6 +252,104 @@ Response:
 }
 ```
 
+#### Get Fixed Tickets by Date Range
+Retrieve tickets that left the Top 7 prioritized backlog within a specific date range.
+
+**GET** `/api/external/tickets/fixed`
+
+Query Parameters:
+- `from` (string, optional): Start date in ISO format (e.g., "2025-01-01")
+- `to` (string, optional): End date in ISO format (e.g., "2025-01-31")
+- `page` (integer, default: 1): Page number for pagination
+- `limit` (integer, default: 100): Number of tickets per page
+
+Example:
+```
+GET /api/external/tickets/fixed?from=2025-01-01&to=2025-01-31&limit=20
+```
+
+Response:
+```json
+{
+  "tickets": [
+    {
+      "key": "KSD-12345",
+      "summary": "Critical bug in payment system",
+      "outgoingDate": "2025-01-15T10:00:00.000Z",
+      "timeInTop7Days": 7,
+      "priorityLevel": 5,
+      "priorityCategory": "high",
+      "status": "Closed",
+      "sourceLabels": ["src-bug-fix"],
+      "incomingDate": "2025-01-08T10:00:00.000Z"
+    }
+  ],
+  "total": 25,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 2,
+  "dateRange": {
+    "from": "2025-01-01",
+    "to": "2025-01-31"
+  }
+}
+```
+
+#### Get Source Label Analysis Over Time
+Analyze ticket distribution and trends by source labels over time periods.
+
+**GET** `/api/external/tickets/sources`
+
+Query Parameters:
+- `from` (string, optional): Start date in ISO format (e.g., "2025-01-01")
+- `to` (string, optional): End date in ISO format (e.g., "2025-01-31")
+- `interval` (string, default: "daily"): Time interval - "daily", "weekly", or "monthly"
+- `source` (string, optional): Specific source label to analyze (e.g., "src-bug-fix"). If omitted, analyzes all source labels.
+
+Example:
+```
+GET /api/external/tickets/sources?source=src-bug-fix&from=2025-01-01&to=2025-01-31&interval=weekly
+```
+
+Response:
+```json
+{
+  "analysis": [
+    {
+      "date": "2025-01-01",
+      "interval": "weekly",
+      "sources": {
+        "src-bug-fix": {
+          "total": 15,
+          "inTop7": 12,
+          "avgTimeInTop7": 8.5,
+          "incoming": 3,
+          "outgoing": 2,
+          "tickets": [
+            {
+              "key": "KSD-12345",
+              "summary": "Critical bug in payment system",
+              "timeInTop7Days": 7,
+              "priorityLevel": 5,
+              "status": "In Progress",
+              "incomingDate": "2025-01-02T10:00:00.000Z",
+              "outgoingDate": null
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "total": 4,
+  "interval": "weekly",
+  "sourcesAnalyzed": ["src-bug-fix"],
+  "dateRange": {
+    "from": "2025-01-01",
+    "to": "2025-01-31"
+  }
+}
+```
+
 #### Get Single Ticket
 Retrieve details for a specific ticket.
 
@@ -429,6 +527,116 @@ The API serves data from cached JSON files that are updated when the main dashbo
 - Use pagination for ticket list endpoints
 - Time series data is pre-calculated and cached for performance
 - Consider implementing Redis caching for production deployments
+
+## Curl Examples
+
+Here are practical curl command examples for common API usage patterns:
+
+### Basic Health Check
+```bash
+curl "http://localhost:3001/api/external/health"
+```
+
+### Get All Fixed Tickets (Recent)
+```bash
+curl "http://localhost:3001/api/external/tickets/fixed?limit=10"
+```
+
+### Get Fixed Tickets for Specific Date Range
+```bash
+# Fixed tickets in September 2025
+curl "http://localhost:3001/api/external/tickets/fixed?from=2025-09-01&to=2025-09-30"
+
+# Fixed tickets in the last 7 days
+curl "http://localhost:3001/api/external/tickets/fixed?from=$(date -d '7 days ago' +%Y-%m-%d)&to=$(date +%Y-%m-%d)"
+```
+
+### Extract Ticket Keys Only
+```bash
+# Get just the ticket keys from fixed tickets
+curl "http://localhost:3001/api/external/tickets/fixed?limit=20" | jq '.tickets[].key'
+
+# Get ticket keys and summaries
+curl "http://localhost:3001/api/external/tickets/fixed?limit=10" | jq '.tickets[] | {key, summary}'
+```
+
+### Source Label Analysis Examples
+```bash
+# Analyze bug-fix tickets over the last month (daily breakdown)
+curl "http://localhost:3001/api/external/tickets/sources?source=src-bug-fix&from=2025-09-01&to=2025-09-30&interval=daily"
+
+# Weekly analysis of all source labels
+curl "http://localhost:3001/api/external/tickets/sources?from=2025-09-01&to=2025-09-30&interval=weekly"
+
+# Get just the summary metrics for a specific source
+curl "http://localhost:3001/api/external/tickets/sources?source=src-golive-critical&interval=weekly" | jq '.analysis[] | {date, sources.["src-golive-critical"] | {total, inTop7, avgTimeInTop7, incoming, outgoing}}'
+```
+
+### Current Statistics and Metrics
+```bash
+# Get current overall statistics
+curl "http://localhost:3001/api/external/stats"
+
+# Get just the recently fixed tickets
+curl "http://localhost:3001/api/external/stats" | jq '.recentlyFixed'
+
+# Get current Top 7 tickets by time
+curl "http://localhost:3001/api/external/stats" | jq '.topTicketsByTime'
+```
+
+### Prometheus Metrics for Grafana
+```bash
+# Get metrics in Prometheus format
+curl "http://localhost:3001/api/external/metrics"
+
+# Get metrics in JSON format
+curl "http://localhost:3001/api/external/metrics/json"
+```
+
+### Time Series Data
+```bash
+# Get fixed tickets time series
+curl "http://localhost:3001/api/external/timeseries/fixed-tickets?interval=weekly"
+
+# Get average time trends
+curl "http://localhost:3001/api/external/timeseries/average-time?from=2025-09-01&to=2025-09-30"
+```
+
+### Filtering and Pagination
+```bash
+# Get tickets in Top 7 only
+curl "http://localhost:3001/api/external/tickets?inTop7=true&limit=50"
+
+# Get high priority tickets
+curl "http://localhost:3001/api/external/tickets?priority=high"
+
+# Paginate through large result sets
+curl "http://localhost:3001/api/external/tickets/fixed?page=2&limit=50"
+```
+
+### Complex Analysis with jq
+```bash
+# Count fixed tickets by source label
+curl "http://localhost:3001/api/external/tickets/fixed" | jq '[.tickets[].sourceLabels[]] | group_by(.) | map({source: .[0], count: length})'
+
+# Average time in Top 7 for fixed tickets by priority
+curl "http://localhost:3001/api/external/tickets/fixed" | jq 'group_by(.priorityCategory) | map({priority: .[0].priorityCategory, avgTime: (map(.timeInTop7Days) | add / length)})'
+
+# Daily fixed ticket counts
+curl "http://localhost:3001/api/external/tickets/fixed?from=2025-09-01&to=2025-09-30" | jq '[.tickets[].outgoingDate | split("T")[0]] | group_by(.) | map({date: .[0], count: length})'
+```
+
+### Monitoring and Alerting
+```bash
+# Check if any tickets have been in Top 7 > 30 days
+curl "http://localhost:3001/api/external/tickets?inTop7=true" | jq '.tickets[] | select(.timeInTop7Days > 30) | {key, summary, timeInTop7Days}'
+
+# Get count of tickets by priority in Top 7
+curl "http://localhost:3001/api/external/stats" | jq '.current.byPriority'
+
+# Check recent incoming vs outgoing flow
+curl "http://localhost:3001/api/external/stats" | jq '{fixedToday, incomingToday}'
+```
 
 ## Future Enhancements
 - WebSocket support for real-time updates
