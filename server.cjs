@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // External API router for Grafana and other frontends
-const externalApiRouter = require('./api/external');
+const externalApiRouter = require('./api/external.cjs');
 app.use('/api/external', externalApiRouter);
 
 // Serve static files (the HTML app)

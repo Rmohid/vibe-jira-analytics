@@ -69,7 +69,7 @@ describe('Time in Top 7 Calculation', () => {
 
   test('calculateTimeInTop7 should use incoming date when available', () => {
     // Import the server functions
-    const serverPath = require.resolve('../../server.js');
+    const serverPath = require.resolve('../../server.cjs');
     delete require.cache[serverPath];
     
     // Mock Date.now to have consistent test results
