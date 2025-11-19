@@ -1,11 +1,15 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { BarChart, LineChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { SourceLabelsTooltip } from '../tooltips/SourceLabelsTooltip'
+import { SourceLabelsContent } from '../tooltips/SourceLabelsContent'
 import { CustomAgeTooltip } from '../tooltips/CustomAgeTooltip'
+import { TicketDetailsModal } from '../ui/TicketDetailsModal'
 import { DASHBOARD_CONFIG } from '../../config/dashboardConfig'
 import { calculateDaysFromTimePeriod } from '../../utils/helpers'
 
 export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, startDate, endDate }) => {
+    const [modalData, setModalData] = useState(null)
+    
     if (!realData) return null
     const sourceLabelsConfig = DASHBOARD_CONFIG.charts.sourceLabels
     const ageConfig = DASHBOARD_CONFIG.charts.averageAge
@@ -25,6 +29,16 @@ export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, sta
         return ''
     }
     
+    // Handle bar click for Source Label Occurrences chart
+    const handleBarClick = (data) => {
+        if (data && data.activePayload && data.activeLabel) {
+            setModalData({
+                dateLabel: data.activeLabel,
+                payload: data.activePayload
+            })
+        }
+    }
+    
     return (
         <div className="chart-container p-6">
             <h3 className="text-lg font-semibold mb-4">Source Label Analysis Over Time ({jiraConfig.project} Project) - {getPeriodLabel()}</h3>
@@ -32,9 +46,9 @@ export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, sta
             
             {realData.sourceLabelsTimeSeries && (
                 <div className="mb-6">
-                    <h4 className="font-medium mb-3">Source Label Occurrences Over Time (Stacked)</h4>
+                    <h4 className="font-medium mb-3">Source Label Occurrences Over Time (Stacked) <span className="text-sm text-blue-600 font-normal">- Click on a bar to see full details</span></h4>
                     <ResponsiveContainer width="100%" height={sourceLabelsConfig.height}>
-                        <BarChart data={realData.sourceLabelsTimeSeries}>
+                        <BarChart data={realData.sourceLabelsTimeSeries} onClick={handleBarClick}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" />
                             <YAxis label={{ value: 'Label Count', angle: -90, position: 'insideLeft' }} />
@@ -46,7 +60,8 @@ export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, sta
                                     dataKey={source.label} 
                                     stackId={sourceLabelsConfig.stackId} 
                                     fill={source.color} 
-                                    name={source.name} 
+                                    name={source.name}
+                                    style={{ cursor: 'pointer' }}
                                 />
                             ))}
                         </BarChart>
@@ -305,6 +320,22 @@ export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, sta
                     ))}
                 </div>
             </div>
+            
+            <TicketDetailsModal
+                isOpen={!!modalData}
+                onClose={() => setModalData(null)}
+                title={modalData ? `Source Label Occurrences - ${modalData.dateLabel}` : ''}
+            >
+                {modalData && (
+                    <SourceLabelsContent
+                        dateLabel={modalData.dateLabel}
+                        payload={modalData.payload}
+                        realData={realData}
+                        jiraConfig={jiraConfig}
+                        isModal={true}
+                    />
+                )}
+            </TicketDetailsModal>
         </div>
     )
 }
