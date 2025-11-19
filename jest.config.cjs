@@ -11,6 +11,9 @@ module.exports = {
   transform: {
     '^.+\\.(js|jsx)$': 'babel-jest',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(react-markdown|remark-gfm)/)',
+  ],
   moduleFileExtensions: ['js', 'jsx'],
   collectCoverageFrom: [
     'src/**/*.{js,jsx}',

@@ -38,7 +38,7 @@ RUN npm ci --only=production && \
 
 # Copy server and built frontend from builder stage
 COPY --from=frontend-builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --chown=nodejs:nodejs server.js ./
+COPY --chown=nodejs:nodejs server.cjs ./
 COPY --chown=nodejs:nodejs src/config ./src/config
 COPY --chown=nodejs:nodejs src/utils ./src/utils
 COPY --chown=nodejs:nodejs api ./api
@@ -67,4 +67,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start the application
-CMD ["node", "server.js"]
+CMD ["node", "server.cjs"]

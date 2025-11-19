@@ -5,6 +5,17 @@ import { TextEncoder, TextDecoder } from 'util';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
+// Mock react-markdown and remark-gfm (ES modules)
+jest.mock('react-markdown', () => {
+  return function ReactMarkdown({ children }) {
+    return children;
+  };
+});
+
+jest.mock('remark-gfm', () => {
+  return () => {};
+});
+
 // Mock window.Recharts
 global.window.Recharts = {
   LineChart: () => null,
