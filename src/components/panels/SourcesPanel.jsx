@@ -1,15 +1,12 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { BarChart, LineChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { SourceLabelsTooltip } from '../tooltips/SourceLabelsTooltip'
-import { SourceLabelsContent } from '../tooltips/SourceLabelsContent'
 import { CustomAgeTooltip } from '../tooltips/CustomAgeTooltip'
-import { TicketDetailsModal } from '../ui/TicketDetailsModal'
 import { DASHBOARD_CONFIG } from '../../config/dashboardConfig'
 import { calculateDaysFromTimePeriod } from '../../utils/helpers'
 import { generateSourceLabelsHtml, openHtmlInNewTab } from '../../utils/tooltipToHtml'
 
 export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, startDate, endDate }) => {
-    const [modalData, setModalData] = useState(null)
     
     if (!realData) return null
     const sourceLabelsConfig = DASHBOARD_CONFIG.charts.sourceLabels
@@ -324,22 +321,6 @@ export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, sta
                     ))}
                 </div>
             </div>
-            
-            <TicketDetailsModal
-                isOpen={!!modalData}
-                onClose={() => setModalData(null)}
-                title={modalData ? `Source Label Occurrences - ${modalData.dateLabel}` : ''}
-            >
-                {modalData && (
-                    <SourceLabelsContent
-                        dateLabel={modalData.dateLabel}
-                        payload={modalData.payload}
-                        realData={realData}
-                        jiraConfig={jiraConfig}
-                        isModal={true}
-                    />
-                )}
-            </TicketDetailsModal>
         </div>
     )
 }

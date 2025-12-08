@@ -1,13 +1,10 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { FixedTicketsTooltip } from '../tooltips/FixedTicketsTooltip'
-import { FixedTicketsContent } from '../tooltips/FixedTicketsContent'
-import { TicketDetailsModal } from '../ui/TicketDetailsModal'
 import { DASHBOARD_CONFIG } from '../../config/dashboardConfig'
 import { generateFixedTicketsHtml, openHtmlInNewTab } from '../../utils/tooltipToHtml'
 
 export const FixedTicketsPanel = ({ realData, jiraConfig, timePeriod, customDays, timeInterval, startDate, endDate }) => {
-    const [modalData, setModalData] = useState(null)
     
     if (!realData || !realData.fixedTicketsTimeSeries) return null
     
@@ -111,22 +108,6 @@ export const FixedTicketsPanel = ({ realData, jiraConfig, timePeriod, customDays
                     ))}
                 </BarChart>
             </ResponsiveContainer>
-            
-            <TicketDetailsModal
-                isOpen={!!modalData}
-                onClose={() => setModalData(null)}
-                title={modalData ? `Fixed Tickets - ${modalData.dateLabel}` : ''}
-            >
-                {modalData && (
-                    <FixedTicketsContent
-                        dateLabel={modalData.dateLabel}
-                        payload={modalData.payload}
-                        realData={realData}
-                        jiraConfig={jiraConfig}
-                        isModal={true}
-                    />
-                )}
-            </TicketDetailsModal>
         </div>
     )
 }

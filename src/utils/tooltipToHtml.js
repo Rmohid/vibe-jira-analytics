@@ -122,7 +122,7 @@ export const generateSourceLabelsHtml = (dateLabel, payload, realData, jiraConfi
  * @returns {string} HTML string for the new tab
  */
 export const generateFixedTicketsHtml = (dateLabel, payload, realData, jiraConfig) => {
-    const baseUrl = jiraConfig?.baseUrl || ''
+    const baseUrl = jiraConfig?.baseUrl || 'https://komutel.atlassian.net'
     
     // Find the tickets that were fixed on this date
     const getFixedTickets = (dateLabel, sourceLabel) => {
@@ -298,7 +298,7 @@ export const generateFixedTicketsHtml = (dateLabel, payload, realData, jiraConfi
         <div class="date">Date: ${dateLabel}</div>
         ${sections}
         <div class="summary">
-            <strong>Total: ${totalTickets} tickets left Top 7 on ${dateLabel}</strong>
+            <strong>Total: ${totalTickets} tickets left the Top 7 on ${dateLabel}</strong>
         </div>
     </div>
 </body>
