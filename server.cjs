@@ -1069,20 +1069,24 @@ app.post('/api/jira/historical-data', async (req, res) => {
     });
 
     // Generate average age time series based on actual data
+    // Excludes tickets with 'src-new-feature' label from average calculations
     const averageAgeTimeSeries = timeSeries.map(period => {
       const periodTickets = period.tickets || [];
-      
+
       const calculateAvgAge = (category) => {
-        const categoryTickets = periodTickets.filter(t => t.priorityCategory === category);
+        const categoryTickets = periodTickets.filter(t =>
+          t.priorityCategory === category &&
+          !t.sourceLabels.includes('src-new-feature')
+        );
         if (categoryTickets.length === 0) return 0;
-        
+
         const totalAge = categoryTickets.reduce((sum, ticket) => {
           return sum + calculateTimeInTop7(ticket.incomingDate, ticket.created);
         }, 0);
-        
+
         return Math.round(totalAge / categoryTickets.length);
       };
-      
+
       return {
         date: period.date,
         highAvgAge: calculateAvgAge('high'),
