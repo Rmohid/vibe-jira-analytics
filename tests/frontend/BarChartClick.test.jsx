@@ -3,6 +3,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { FixedTicketsPanel } from '../../src/components/panels/FixedTicketsPanel';
 import { SourcesPanel } from '../../src/components/panels/SourcesPanel';
 
+// Mock window.open
+const mockWindowOpen = jest.fn();
+global.window.open = mockWindowOpen;
+
 // Mock Recharts components
 jest.mock('recharts', () => ({
     BarChart: ({ children, onClick }) => (
@@ -25,6 +29,18 @@ jest.mock('recharts', () => ({
 }));
 
 describe('Bar Chart Click Interactions', () => {
+    beforeEach(() => {
+        // Clear mock before each test
+        mockWindowOpen.mockClear();
+        // Mock the new window object that window.open returns
+        const mockNewWindow = {
+            document: {
+                write: jest.fn(),
+                close: jest.fn()
+            }
+        };
+        mockWindowOpen.mockReturnValue(mockNewWindow);
+    });
     const mockRealData = {
         fixedTicketsTimeSeries: [
             {
@@ -70,7 +86,7 @@ describe('Bar Chart Click Interactions', () => {
     };
 
     describe('FixedTicketsPanel', () => {
-        test('opens modal when bar chart is clicked', () => {
+        test('opens new tab when bar chart is clicked', () => {
             render(
                 <FixedTicketsPanel
                     realData={mockRealData}
@@ -84,11 +100,20 @@ describe('Bar Chart Click Interactions', () => {
             const barChart = screen.getByTestId('bar-chart');
             fireEvent.click(barChart);
 
-            // Modal should appear with the date in the title
-            expect(screen.getByText(/Fixed Tickets - 2024-01-15/)).toBeInTheDocument();
+            // window.open should have been called
+            expect(mockWindowOpen).toHaveBeenCalledWith('', '_blank');
+            
+            // The new window should have received HTML content
+            const mockNewWindow = mockWindowOpen.mock.results[0].value;
+            expect(mockNewWindow.document.write).toHaveBeenCalled();
+            const htmlContent = mockNewWindow.document.write.mock.calls[0][0];
+            
+            // Verify the HTML content contains expected information
+            expect(htmlContent).toContain('Fixed Tickets');
+            expect(htmlContent).toContain('2024-01-15');
         });
 
-        test('closes modal when close button is clicked', () => {
+        test('displays instruction to click bar for new tab', () => {
             render(
                 <FixedTicketsPanel
                     realData={mockRealData}
@@ -98,38 +123,13 @@ describe('Bar Chart Click Interactions', () => {
                 />
             );
 
-            // Click on the bar chart to open modal
-            const barChart = screen.getByTestId('bar-chart');
-            fireEvent.click(barChart);
-
-            // Modal should be open
-            expect(screen.getByText(/Fixed Tickets - 2024-01-15/)).toBeInTheDocument();
-
-            // Click close button
-            const closeButton = screen.getByLabelText('Close');
-            fireEvent.click(closeButton);
-
-            // Modal should be closed
-            expect(screen.queryByText(/Fixed Tickets - 2024-01-15/)).not.toBeInTheDocument();
-        });
-
-        test('displays instruction to click bar', () => {
-            render(
-                <FixedTicketsPanel
-                    realData={mockRealData}
-                    jiraConfig={mockJiraConfig}
-                    timePeriod="30d"
-                    timeInterval="daily"
-                />
-            );
-
-            // Should show instruction to click bar
-            expect(screen.getByText(/Click on a bar to see full details/)).toBeInTheDocument();
+            // Should show instruction to click bar for new tab
+            expect(screen.getByText(/Click on a bar to open details in new tab/)).toBeInTheDocument();
         });
     });
 
     describe('SourcesPanel', () => {
-        test('opens modal when bar chart is clicked', () => {
+        test('opens new tab when bar chart is clicked', () => {
             render(
                 <SourcesPanel
                     realData={mockRealData}
@@ -142,11 +142,20 @@ describe('Bar Chart Click Interactions', () => {
             const barChart = screen.getByTestId('bar-chart');
             fireEvent.click(barChart);
 
-            // Modal should appear with the date in the title
-            expect(screen.getByText(/Source Label Occurrences - 2024-01-15/)).toBeInTheDocument();
+            // window.open should have been called
+            expect(mockWindowOpen).toHaveBeenCalledWith('', '_blank');
+            
+            // The new window should have received HTML content
+            const mockNewWindow = mockWindowOpen.mock.results[0].value;
+            expect(mockNewWindow.document.write).toHaveBeenCalled();
+            const htmlContent = mockNewWindow.document.write.mock.calls[0][0];
+            
+            // Verify the HTML content contains expected information
+            expect(htmlContent).toContain('Source Label Occurrences');
+            expect(htmlContent).toContain('2024-01-15');
         });
 
-        test('closes modal when close button is clicked', () => {
+        test('displays instruction to click bar for new tab', () => {
             render(
                 <SourcesPanel
                     realData={mockRealData}
@@ -155,32 +164,8 @@ describe('Bar Chart Click Interactions', () => {
                 />
             );
 
-            // Click on the bar chart to open modal
-            const barChart = screen.getByTestId('bar-chart');
-            fireEvent.click(barChart);
-
-            // Modal should be open
-            expect(screen.getByText(/Source Label Occurrences - 2024-01-15/)).toBeInTheDocument();
-
-            // Click close button
-            const closeButton = screen.getByLabelText('Close');
-            fireEvent.click(closeButton);
-
-            // Modal should be closed
-            expect(screen.queryByText(/Source Label Occurrences - 2024-01-15/)).not.toBeInTheDocument();
-        });
-
-        test('displays instruction to click bar', () => {
-            render(
-                <SourcesPanel
-                    realData={mockRealData}
-                    jiraConfig={mockJiraConfig}
-                    timePeriod="30d"
-                />
-            );
-
-            // Should show instruction to click bar
-            expect(screen.getByText(/Click on a bar to see full details/)).toBeInTheDocument();
+            // Should show instruction to click bar for new tab
+            expect(screen.getByText(/Click on a bar to open details in new tab/)).toBeInTheDocument();
         });
     });
 });

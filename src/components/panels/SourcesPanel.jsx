@@ -6,6 +6,7 @@ import { CustomAgeTooltip } from '../tooltips/CustomAgeTooltip'
 import { TicketDetailsModal } from '../ui/TicketDetailsModal'
 import { DASHBOARD_CONFIG } from '../../config/dashboardConfig'
 import { calculateDaysFromTimePeriod } from '../../utils/helpers'
+import { generateSourceLabelsHtml, openHtmlInNewTab } from '../../utils/tooltipToHtml'
 
 export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, startDate, endDate }) => {
     const [modalData, setModalData] = useState(null)
@@ -32,10 +33,13 @@ export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, sta
     // Handle bar click for Source Label Occurrences chart
     const handleBarClick = (data) => {
         if (data && data.activePayload && data.activeLabel) {
-            setModalData({
-                dateLabel: data.activeLabel,
-                payload: data.activePayload
-            })
+            const htmlContent = generateSourceLabelsHtml(
+                data.activeLabel,
+                data.activePayload,
+                realData,
+                jiraConfig
+            )
+            openHtmlInNewTab(htmlContent)
         }
     }
     
@@ -46,7 +50,7 @@ export const SourcesPanel = ({ realData, jiraConfig, timePeriod, customDays, sta
             
             {realData.sourceLabelsTimeSeries && (
                 <div className="mb-6">
-                    <h4 className="font-medium mb-3">Source Label Occurrences Over Time (Stacked) <span className="text-sm text-blue-600 font-normal">- Click on a bar to see full details</span></h4>
+                    <h4 className="font-medium mb-3">Source Label Occurrences Over Time (Stacked) <span className="text-sm text-blue-600 font-normal">- Click on a bar to open details in new tab</span></h4>
                     <ResponsiveContainer width="100%" height={sourceLabelsConfig.height}>
                         <BarChart data={realData.sourceLabelsTimeSeries} onClick={handleBarClick}>
                             <CartesianGrid strokeDasharray="3 3" />
