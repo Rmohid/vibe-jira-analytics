@@ -1,12 +1,10 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { FixedTicketsTooltip } from '../tooltips/FixedTicketsTooltip'
-import { FixedTicketsContent } from '../tooltips/FixedTicketsContent'
-import { TicketDetailsModal } from '../ui/TicketDetailsModal'
 import { DASHBOARD_CONFIG } from '../../config/dashboardConfig'
+import { generateFixedTicketsHtml, openHtmlInNewTab } from '../../utils/tooltipToHtml'
 
 export const FixedTicketsPanel = ({ realData, jiraConfig, timePeriod, customDays, timeInterval, startDate, endDate }) => {
-    const [modalData, setModalData] = useState(null)
     
     if (!realData || !realData.fixedTicketsTimeSeries) return null
     
@@ -48,10 +46,13 @@ export const FixedTicketsPanel = ({ realData, jiraConfig, timePeriod, customDays
     // Handle bar click
     const handleBarClick = (data) => {
         if (data && data.activePayload && data.activeLabel) {
-            setModalData({
-                dateLabel: data.activeLabel,
-                payload: data.activePayload
-            })
+            const htmlContent = generateFixedTicketsHtml(
+                data.activeLabel,
+                data.activePayload,
+                realData,
+                jiraConfig
+            )
+            openHtmlInNewTab(htmlContent)
         }
     }
     
@@ -79,7 +80,7 @@ export const FixedTicketsPanel = ({ realData, jiraConfig, timePeriod, customDays
     return (
         <div className="chart-container p-6">
             <h3 className="text-lg font-semibold mb-4">{title}</h3>
-            <p className="text-sm text-gray-600 mb-4">Shows tickets that left the Top 7 prioritized backlog (Priority Level &gt; 99 or cleared) categorized by source labels. Tickets with multiple labels are counted in all applicable categories. <span className="font-semibold text-blue-600">Click on a bar to see full details.</span></p>
+            <p className="text-sm text-gray-600 mb-4">Shows tickets that left the Top 7 prioritized backlog (Priority Level &gt; 99 or cleared) categorized by source labels. Tickets with multiple labels are counted in all applicable categories. <span className="font-semibold text-blue-600">Click on a bar to open details in new tab.</span></p>
             <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={realData.fixedTicketsTimeSeries} onClick={handleBarClick}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -107,22 +108,6 @@ export const FixedTicketsPanel = ({ realData, jiraConfig, timePeriod, customDays
                     ))}
                 </BarChart>
             </ResponsiveContainer>
-            
-            <TicketDetailsModal
-                isOpen={!!modalData}
-                onClose={() => setModalData(null)}
-                title={modalData ? `Fixed Tickets - ${modalData.dateLabel}` : ''}
-            >
-                {modalData && (
-                    <FixedTicketsContent
-                        dateLabel={modalData.dateLabel}
-                        payload={modalData.payload}
-                        realData={realData}
-                        jiraConfig={jiraConfig}
-                        isModal={true}
-                    />
-                )}
-            </TicketDetailsModal>
         </div>
     )
 }
